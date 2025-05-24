@@ -39,4 +39,4 @@ For any inquiries or project collaborations, please use the contact form on the 
 
 ---
 
-© Mohammad Ehsan. All rights reserved.
+© Mohammad Ehsan. Use Freely For Educational Purpose.
