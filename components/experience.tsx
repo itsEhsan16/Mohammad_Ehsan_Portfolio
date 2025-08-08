@@ -1,17 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import { SectionTitle } from "./section-title"
-import { useThree } from "@/contexts/three-context"
-import dynamic from "next/dynamic"
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { SectionTitle } from "./section-title";
+import { useThree } from "@/contexts/three-context";
+import dynamic from "next/dynamic";
 
 // Dynamically import Three.js components with no SSR
 const ThreeSectionIndicator = dynamic(
-  () => import("./three-section-indicator").then((mod) => mod.ThreeSectionIndicator),
-  { ssr: false },
-)
+  () =>
+    import("./three-section-indicator").then(
+      (mod) => mod.ThreeSectionIndicator
+    ),
+  { ssr: false }
+);
 
 const experiences = [
   {
@@ -46,15 +48,10 @@ const experiences = [
   //     "Assisted in the development of responsive websites and web applications. Gained experience in frontend technologies and agile development methodologies.",
   //   technologies: ["HTML/CSS", "JavaScript", "jQuery", "PHP", "MySQL"],
   // },
-]
+];
 
 export function Experience() {
-  const { isThreeEnabled } = useThree()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const { isThreeEnabled } = useThree();
 
   return (
     <section id="experience" className="py-20 bg-background">
@@ -66,13 +63,14 @@ export function Experience() {
           viewport={{ once: true }}
           className="mb-12"
         >
-          {isMounted && isThreeEnabled ? (
+          {isThreeEnabled ? (
             <ThreeSectionIndicator title="Experience" number="04" />
           ) : (
             <SectionTitle title="Experience" number="04" />
           )}
           <p className="text-muted-foreground max-w-2xl">
-            My professional journey and the companies I've had the privilege to work with.
+            My professional journey and the companies I've had the privilege to
+            work with.
           </p>
         </motion.div>
 
@@ -93,7 +91,9 @@ export function Experience() {
                   <p className="text-muted-foreground">{exp.period}</p>
                 </div>
                 <div className="md:w-2/3">
-                  <p className="text-muted-foreground mb-4">{exp.description}</p>
+                  <p className="text-muted-foreground mb-4">
+                    {exp.description}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {exp.technologies.map((tech, techIndex) => (
                       <Badge key={techIndex} variant="outline">
@@ -111,5 +111,5 @@ export function Experience() {
         </div>
       </div>
     </section>
-  )
+  );
 }
