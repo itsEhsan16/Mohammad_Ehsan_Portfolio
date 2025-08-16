@@ -52,7 +52,7 @@ const projects = [
 
 export function Projects() {
   const { isThreeEnabled } = useThree()
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [_hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -60,26 +60,26 @@ export function Projects() {
   }, [])
 
   return (
-    <section id="work" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="work" className="section-spacing bg-background">
+      <div className="container-wide">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="content-spacing"
         >
           {isMounted && isThreeEnabled ? (
             <ThreeSectionIndicator title="Work" number="03" />
           ) : (
             <SectionTitle title="Work" number="03" />
           )}
-          <p className="text-muted-foreground max-w-2xl">
+          <p className="text-muted-foreground max-w-3xl text-lg leading-relaxed">
             A selection of projects I've worked on, showcasing my skills and experience in different domains.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
           {projects.map((project, index) => (
             <motion.div
               key={index}
@@ -91,12 +91,12 @@ export function Projects() {
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              <div className="bg-card hover:bg-card/80 p-6 rounded-lg border border-border transition-colors h-full">
-                <h3 className="text-xl font-bold mb-3">{project.title}</h3>
-                <p className="text-muted-foreground mb-4">{project.description}</p>
-                <div className="flex flex-wrap gap-2 mb-6">
+              <div className="bg-card hover:bg-card/80 p-8 rounded-xl border border-border transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 h-full flex flex-col">
+                <h3 className="text-xl font-bold mb-4 text-balance">{project.title}</h3>
+                <p className="text-muted-foreground mb-6 leading-relaxed flex-grow">{project.description}</p>
+                <div className="flex flex-wrap gap-2 mb-8">
                   {project.tags.map((tag, tagIndex) => (
-                    <Badge key={tagIndex} variant="outline">
+                    <Badge key={tagIndex} variant="outline" className="px-3 py-1">
                       {tag}
                     </Badge>
                   ))}

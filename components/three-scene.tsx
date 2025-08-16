@@ -4,16 +4,25 @@ import { useRef, useState, useEffect } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Environment, Float, Html } from "@react-three/drei"
 import { Vector3, Euler, MathUtils } from "three"
+import * as THREE from "three"
 
 // Cube component with interactive behavior
-function Cube({ position, rotation, color, scale = 1, section }) {
-  const meshRef = useRef(null)
+interface CubeProps {
+  position: Vector3;
+  rotation: Euler;
+  color: string;
+  scale?: number;
+  section: string;
+}
+
+function Cube({ position, rotation, color, scale = 1, section }: CubeProps) {
+  const meshRef = useRef<THREE.Mesh>(null!)
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
   const [initialScale] = useState({ x: scale, y: scale, z: scale })
 
   // Animation on hover and click
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     if (meshRef.current) {
       // Create new rotation values instead of modifying directly
       meshRef.current.rotation.x = meshRef.current.rotation.x + delta * 0.2
@@ -78,8 +87,12 @@ function Cube({ position, rotation, color, scale = 1, section }) {
 }
 
 // Glowing orb component
-function GlowingOrb({ position }) {
-  const meshRef = useRef(null)
+interface GlowingOrbProps {
+  position: Vector3;
+}
+
+function GlowingOrb({ position }: GlowingOrbProps) {
+  const meshRef = useRef<THREE.Mesh>(null!)
   const [initialY, setInitialY] = useState(0)
 
   // Ensure position is a valid object

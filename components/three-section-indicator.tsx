@@ -7,8 +7,8 @@ import { SectionTitle } from "./section-title"
 import { useThree } from "@/contexts/three-context"
 
 // This component uses Three.js hooks and must ONLY be used inside a Canvas
-function SectionTitle3D({ title, number }) {
-  const textRef = useRef(null)
+function SectionTitle3D({ title, number }: { title: string; number: string }) {
+  const textRef = useRef<any>(null)
   const [initialY, setInitialY] = useState(0)
 
   useEffect(() => {
@@ -53,7 +53,7 @@ function SectionTitle3D({ title, number }) {
   )
 }
 
-export function ThreeSectionIndicator({ title, number }) {
+export function ThreeSectionIndicator({ title, number }: { title: string; number: string }) {
   const { isThreeEnabled, disableThree } = useThree()
   const [isMounted, setIsMounted] = useState(false)
 
@@ -62,7 +62,7 @@ export function ThreeSectionIndicator({ title, number }) {
 
     // Only run in browser environment
     if (typeof window !== "undefined") {
-      const handleError = (event) => {
+      const handleError = (event: any) => {
         if (
           event.message &&
           (event.message.includes("THREE") ||

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Code, Layout, Smartphone, Database, Lightbulb, Layers } from "lucide-react"
+import { Code, Layout, Database, Lightbulb } from "lucide-react"
 import { SectionTitle } from "./section-title"
 import { useThree } from "@/contexts/three-context"
 import dynamic from "next/dynamic"
@@ -61,26 +61,26 @@ export function Expertise() {
   }, [])
 
   return (
-    <section id="expertise" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="expertise" className="section-spacing bg-background">
+      <div className="container-wide">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="content-spacing"
         >
           {isMounted ? (
             <ThreeSectionIndicator title="Expertise" number="02" />
           ) : (
             <SectionTitle title="Expertise" number="02" />
           )}
-          <p className="text-muted-foreground max-w-2xl">
+          <p className="text-muted-foreground max-w-3xl text-lg leading-relaxed">
             My technical skills and areas of expertise span across various domains of software development.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
           {skills.map((skill, index) => (
             <motion.div
               key={index}
@@ -88,14 +88,14 @@ export function Expertise() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-card hover:bg-card/80 p-6 rounded-lg border border-border transition-colors"
+              className="bg-card hover:bg-card/80 p-8 rounded-xl border border-border transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
             >
-              <div className="mb-4">{skill.icon}</div>
-              <h3 className="text-xl font-bold mb-2">{skill.title}</h3>
-              <p className="text-muted-foreground mb-4">{skill.description}</p>
+              <div className="mb-6">{skill.icon}</div>
+              <h3 className="text-xl font-bold mb-4 text-balance">{skill.title}</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">{skill.description}</p>
               <div className="flex flex-wrap gap-2">
                 {skill.technologies.map((tech, techIndex) => (
-                  <span key={techIndex} className="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded">
+                  <span key={techIndex} className="text-xs font-mono bg-primary/10 text-primary px-3 py-1.5 rounded-md">
                     {tech}
                   </span>
                 ))}

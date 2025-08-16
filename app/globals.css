@@ -49,3 +49,26 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Enhanced spacing and layout utilities */
+@layer utilities {
+  .container-wide {
+    @apply container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20;
+  }
+  
+  .section-spacing {
+    @apply py-24 sm:py-28 lg:py-32;
+  }
+  
+  .section-spacing-sm {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+  
+  .content-spacing {
+    @apply mb-16 sm:mb-20 lg:mb-24;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}

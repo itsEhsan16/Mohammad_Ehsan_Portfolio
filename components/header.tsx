@@ -36,7 +36,7 @@ export function Header() {
           : "bg-transparent py-6"
       )}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center">
+      <div className="container-wide flex justify-between items-center">
         <Link
           href="/"
           className="text-xl font-mono text-primary hover:text-primary/80 transition-colors"

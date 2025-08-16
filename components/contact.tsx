@@ -17,9 +17,28 @@ const ThreeSectionIndicator = dynamic(
   { ssr: false },
 )
 
+// Form types
+interface FormState {
+  user_name: string;
+  user_email: string;
+  message: string;
+  phone: string;
+}
+
+interface FormErrors {
+  user_name?: string;
+  user_email?: string;
+  message?: string;
+}
+
+interface SubmitResult {
+  success: boolean;
+  message: string;
+}
+
 // Form validation
-const validateForm = (formState) => {
-  const errors = {}
+const validateForm = (formState: FormState): FormErrors => {
+  const errors: FormErrors = {}
 
   if (!formState.user_name.trim()) {
     errors.user_name = "Name is required"
@@ -40,33 +59,33 @@ const validateForm = (formState) => {
 
 export function Contact() {
   const { isThreeEnabled } = useThree()
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<FormState>({
     user_name: "",
     user_email: "",
     message: "",
     phone: "", // Honeypot field
   })
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitResult, setSubmitResult] = useState(null)
+  const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null)
   const [isMounted, setIsMounted] = useState(false)
-  const formRef = useRef(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormState((prev) => ({ ...prev, [name]: value }))
 
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Check if honeypot field is filled (spam bot)
@@ -90,10 +109,18 @@ export function Contact() {
     setSubmitResult(null)
 
     try {
-      // Your actual EmailJS credentials
-      const serviceId = "service_zdy1hr8"
-      const templateId = "template_gak0qzl"
-      const publicKey = "HGDZySatoxddY7vP6"
+      // Use environment variables for credentials
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
+
+      if (!serviceId || !templateId || !publicKey) {
+        throw new Error("EmailJS configuration is missing")
+      }
+
+      if (!formRef.current) {
+        throw new Error("Form reference is null")
+      }
 
       const result = await emailjs.sendForm(serviceId, templateId, formRef.current, publicKey)
 
@@ -119,26 +146,26 @@ export function Contact() {
   }
 
   return (
-    <section id="contact" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="contact" className="section-spacing bg-background">
+      <div className="container-wide">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="content-spacing"
         >
           {isMounted && isThreeEnabled ? (
             <ThreeSectionIndicator title="Contact" number="05" />
           ) : (
             <SectionTitle title="Contact" number="05" />
           )}
-          <p className="text-muted-foreground max-w-2xl">
+          <p className="text-muted-foreground max-w-3xl text-lg leading-relaxed">
             Have a project in mind or want to discuss potential opportunities? Feel free to reach out.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -154,16 +181,16 @@ export function Contact() {
               <div className="flex items-center gap-4">
                 <Mail className="w-5 h-5 text-primary" />
                 <a
-                  href="mailto:your.email@example.com"
+                  href={`mailto:${process.env.NEXT_PUBLIC_EMAIL}`}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  mdehsan2737@gmail.com
+                  {process.env.NEXT_PUBLIC_EMAIL}
                 </a>
               </div>
 
               <div className="flex gap-4">
                 <a
-                  href="https://github.com/itsEhsan16"
+                  href={process.env.NEXT_PUBLIC_GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-full bg-card hover:bg-card/80 transition-colors"
@@ -172,7 +199,7 @@ export function Contact() {
                   <Github className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://www.linkedin.com/in/mohammad-ehsan-23aaba290/"
+                  href={process.env.NEXT_PUBLIC_LINKEDIN_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-full bg-card hover:bg-card/80 transition-colors"
@@ -181,7 +208,7 @@ export function Contact() {
                   <Linkedin className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://x.com/Md_Ehsan16"
+                  href={process.env.NEXT_PUBLIC_TWITTER_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-full bg-card hover:bg-card/80 transition-colors"
@@ -209,7 +236,7 @@ export function Contact() {
                   name="phone"
                   value={formState.phone}
                   onChange={handleChange}
-                  tabIndex="-1"
+                  tabIndex={-1}
                   autoComplete="off"
                 />
                 {/* Hidden reply_to field for EmailJS reply-to header */}

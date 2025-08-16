@@ -7,7 +7,7 @@ import { useThree } from "@/contexts/three-context"
 
 // This component uses Three.js hooks and must ONLY be used inside a Canvas
 function ScrollText3D() {
-  const textRef = useRef(null)
+  const textRef = useRef<any>(null)
   const [initialY, setInitialY] = useState(0)
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function ScrollIndicator() {
 
     // Only run in browser environment
     if (typeof window !== "undefined") {
-      const handleError = (event) => {
+      const handleError = (event: any) => {
         if (
           event.message &&
           (event.message.includes("THREE") ||

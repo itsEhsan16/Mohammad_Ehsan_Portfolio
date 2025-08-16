@@ -5,9 +5,9 @@ import { useFrame } from "@react-three/fiber"
 import { Text } from "@react-three/drei"
 
 // This component uses Three.js hooks and must ONLY be used inside a Canvas
-function NavItem3D({ position, text, section, index }) {
+function NavItem3D({ position, text, section, index }: { position: any; text: string; section: string; index: number }) {
   const [hovered, setHovered] = useState(false)
-  const meshRef = useRef(null)
+  const meshRef = useRef<any>(null)
   const [initialY, setInitialY] = useState(0)
 
   // Ensure position is a valid array

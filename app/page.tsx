@@ -12,10 +12,15 @@ export default function Home() {
     <main className="min-h-screen">
       <Header />
       <HeroClientWrapper />
-      <Expertise />
-      <Projects />
-      <Experience />
-      <Contact />
+      
+      {/* Add spacing between major sections */}
+      <div className="space-y-16 sm:space-y-20 lg:space-y-24">
+        <Expertise />
+        <Projects />
+        <Experience />
+        <Contact />
+      </div>
+      
       <Footer />
       <VerticalNav />
     </main>

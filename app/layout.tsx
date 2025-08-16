@@ -4,6 +4,8 @@ import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThreeProvider } from "@/contexts/three-context";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { trackPageView } from "@/lib/analytics";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const spaceMono = Space_Mono({
@@ -23,20 +25,27 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Track page views in production
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+    trackPageView(window.location.pathname);
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${spaceMono.variable} font-sans bg-background`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ThreeProvider>{children}</ThreeProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ThreeProvider>{children}</ThreeProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
