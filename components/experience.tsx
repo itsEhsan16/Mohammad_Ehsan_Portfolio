@@ -17,6 +17,14 @@ const ThreeSectionIndicator = dynamic(
 
 const experiences = [
   {
+    position: "Associate L1",
+    company: "Infotact Solution",
+    period: "07/2025 - Present",
+    description:
+      "Designing, developing, and maintaining responsive web applications for diverse clients. Implementing modern frontend best practices, optimizing user experience, and collaborating remotely with designers, backend developers, and stakeholders to deliver high-quality, scalable solutions.",
+    technologies: ["React", "TypeScript", "Next.js", "GraphQL", "Tailwind CSS"],
+  },
+  {
     position: "Frontend Developer",
     company: "Freelancing",
     period: "05/2024 - Present",
@@ -86,9 +94,13 @@ export function Experience() {
             >
               <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                 <div className="lg:w-1/3 lg:flex-shrink-0">
-                  <h3 className="text-xl font-bold mb-2 text-balance">{exp.position}</h3>
+                  <h3 className="text-xl font-bold mb-2 text-balance">
+                    {exp.position}
+                  </h3>
                   <p className="text-primary font-mono mb-1">{exp.company}</p>
-                  <p className="text-muted-foreground font-mono text-sm">{exp.period}</p>
+                  <p className="text-muted-foreground font-mono text-sm">
+                    {exp.period}
+                  </p>
                 </div>
                 <div className="lg:w-2/3">
                   <p className="text-muted-foreground mb-6 leading-relaxed text-lg">
@@ -96,7 +108,11 @@ export function Experience() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {exp.technologies.map((tech, techIndex) => (
-                      <Badge key={techIndex} variant="outline" className="px-3 py-1">
+                      <Badge
+                        key={techIndex}
+                        variant="outline"
+                        className="px-3 py-1"
+                      >
                         {tech}
                       </Badge>
                     ))}

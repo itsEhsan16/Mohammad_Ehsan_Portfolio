@@ -1,24 +1,34 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Code, Layout, Database, Lightbulb } from "lucide-react"
-import { SectionTitle } from "./section-title"
-import { useThree } from "@/contexts/three-context"
-import dynamic from "next/dynamic"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Code, Layout, Database, Lightbulb } from "lucide-react";
+import { SectionTitle } from "./section-title";
+import { useThree } from "@/contexts/three-context";
+import dynamic from "next/dynamic";
 
 // Dynamically import Three.js components with no SSR
 const ThreeSectionIndicator = dynamic(
-  () => import("./three-section-indicator").then((mod) => mod.ThreeSectionIndicator),
-  { ssr: false },
-)
+  () =>
+    import("./three-section-indicator").then(
+      (mod) => mod.ThreeSectionIndicator
+    ),
+  { ssr: false }
+);
 
 const skills = [
   {
     title: "Frontend Development",
-    description: "Creating responsive, accessible, and performant user interfaces with modern frameworks.",
+    description:
+      "Creating responsive, accessible, and performant user interfaces with modern frameworks.",
     icon: <Layout className="w-10 h-10 text-primary" />,
-    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "HTML/CSS"],
+    technologies: [
+      "React",
+      "Next.js",
+      "TypeScript",
+      "Tailwind CSS",
+      "HTML/CSS",
+    ],
   },
   // {
   //   title: "Mobile Development",
@@ -28,15 +38,17 @@ const skills = [
   // },
   {
     title: "Backend Development",
-    description: "Designing and implementing scalable server-side applications and APIs.",
+    description:
+      "Designing and implementing scalable server-side applications and APIs.",
     icon: <Database className="w-10 h-10 text-primary" />,
-    technologies: ["Node.js", "Express", "MongoDB", "PostgreSQL", "Firebase"],
+    technologies: ["Node.js", "Express", "Firebase", "Supabase"],
   },
   {
     title: "UI/UX Design",
-    description: "Creating intuitive and engaging user experiences with a focus on usability.",
+    description:
+      "Creating intuitive and engaging user experiences with a focus on usability.",
     icon: <Lightbulb className="w-10 h-10 text-primary" />,
-    technologies: ["Figma", "Adobe XD", "Sketch", "User Research", "Prototyping"],
+    technologies: ["Figma", "Prototyping"],
   },
   // {
   //   title: "DevOps",
@@ -46,19 +58,20 @@ const skills = [
   // },
   {
     title: "Programming Languages",
-    description: "Proficient in multiple programming languages for various application domains.",
+    description:
+      "Proficient in multiple programming languages for various application domains.",
     icon: <Code className="w-10 h-10 text-primary" />,
-    technologies: ["JavaScript", "TypeScript", "Python", "Java", "C#"],
+    technologies: ["JavaScript", "TypeScript", "Python", "Java"],
   },
-]
+];
 
 export function Expertise() {
-  const { isThreeEnabled } = useThree()
-  const [isMounted, setIsMounted] = useState(false)
+  const { isThreeEnabled } = useThree();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   return (
     <section id="expertise" className="section-spacing bg-background">
@@ -76,7 +89,8 @@ export function Expertise() {
             <SectionTitle title="Expertise" number="02" />
           )}
           <p className="text-muted-foreground max-w-3xl text-lg leading-relaxed">
-            My technical skills and areas of expertise span across various domains of software development.
+            My technical skills and areas of expertise span across various
+            domains of software development.
           </p>
         </motion.div>
 
@@ -91,11 +105,18 @@ export function Expertise() {
               className="bg-card hover:bg-card/80 p-8 rounded-xl border border-border transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
             >
               <div className="mb-6">{skill.icon}</div>
-              <h3 className="text-xl font-bold mb-4 text-balance">{skill.title}</h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">{skill.description}</p>
+              <h3 className="text-xl font-bold mb-4 text-balance">
+                {skill.title}
+              </h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                {skill.description}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {skill.technologies.map((tech, techIndex) => (
-                  <span key={techIndex} className="text-xs font-mono bg-primary/10 text-primary px-3 py-1.5 rounded-md">
+                  <span
+                    key={techIndex}
+                    className="text-xs font-mono bg-primary/10 text-primary px-3 py-1.5 rounded-md"
+                  >
                     {tech}
                   </span>
                 ))}
@@ -105,5 +126,5 @@ export function Expertise() {
         </div>
       </div>
     </section>
-  )
+  );
 }
