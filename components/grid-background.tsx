@@ -12,6 +12,24 @@ function GridBackgroundComponent({ className = "" }: GridBackgroundProps) {
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
 
+  // Create transforms outside of the mapping function
+  const createTransforms = (row: number, col: number) => {
+    return {
+      scale: useTransform([mouseX, mouseY], (latest: number[]) => {
+        const deltaX = latest[0] - col / 7;
+        const deltaY = latest[1] - row / 7;
+        const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        return 1 - dist * 0.6;
+      }),
+      opacity: useTransform([mouseX, mouseY], (latest: number[]) => {
+        const deltaX = latest[0] - col / 7;
+        const deltaY = latest[1] - row / 7;
+        const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        return 1 - dist * 0.8;
+      })
+    };
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const rect = document
@@ -37,24 +55,12 @@ function GridBackgroundComponent({ className = "" }: GridBackgroundProps) {
           const row = Math.floor(i / 8);
           const col = i % 8;
 
+          const { scale, opacity } = createTransforms(row, col);
           return (
             <motion.div
               key={i}
               className="border border-white/50 w-full h-full"
-              style={{
-                scale: useTransform([mouseX, mouseY], (latest: number[]) => {
-                  const deltaX = latest[0] - col / 7;
-                  const deltaY = latest[1] - row / 7;
-                  const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                  return 1 - dist * 0.6;
-                }),
-                opacity: useTransform([mouseX, mouseY], (latest: number[]) => {
-                  const deltaX = latest[0] - col / 7;
-                  const deltaY = latest[1] - row / 7;
-                  const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                  return 1 - dist * 0.8;
-                }),
-              }}
+              style={{ scale, opacity }}
             />
           );
         })}
