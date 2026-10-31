@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Project } from "@/content/types";
 import { statusLabel } from "@/content/projects";
 import { useGLPlane, type PlaneVariant } from "@/lib/gl/useGLPlane";
@@ -35,6 +35,18 @@ export function ProjectMedia({
   rounded?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
+  // a loop video plays as DOM (WebGL draws stills only)
+  const useVideo = !!project.loop;
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    if (document.documentElement.classList.contains("reduce")) {
+      v.pause();
+      return;
+    }
+    void v.play().catch(() => {});
+  }, []);
   useGLPlane(ref, {
     src: project.cover?.src,
     title: project.title,
@@ -43,17 +55,29 @@ export function ProjectMedia({
     variant,
     sync,
     morphKey,
-    enabled: gl,
+    enabled: gl && !useVideo,
   });
 
   return (
     <div
       ref={ref}
-      data-gl-plane={gl ? "" : undefined}
+      data-gl-plane={gl && !useVideo ? "" : undefined}
       className={cn("relative aspect-[16/10] w-full overflow-hidden bg-surface", rounded && "rounded-[6px]", className)}
     >
       <div className="gl-media absolute inset-0">
-        {project.cover ? (
+        {useVideo ? (
+          <video
+            ref={video}
+            src={project.loop}
+            poster={project.cover?.src}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={`${project.title} — preview`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : project.cover ? (
           <Image
             src={project.cover.src}
             alt={project.cover.alt}

@@ -243,6 +243,16 @@ export const projects: Project[] = [
           { name: "EmailJS", why: "Serverless contact form." },
         ],
       },
+      {
+        type: "gallery",
+        label: "Screens",
+        images: [
+          { src: "/media/work/personal-portfolio/shot-1.webp", alt: "Hero — the halftone ink field, painted in signal orange", caption: "Hero ink field — paint the name to render it" },
+          { src: "/media/work/personal-portfolio/shot-2.webp", alt: "Selected work reel with a blueprint project poster", caption: "Selected work — sticky horizontal reel" },
+          { src: "/media/work/personal-portfolio/shot-3.webp", alt: "Paper theme with the halftone name in ink", caption: "Paper theme" },
+          { src: "/media/work/personal-portfolio/shot-4.webp", alt: "Services section with tilted process cards", caption: "Services — tilted process cards" },
+        ],
+      },
     ],
   },
 ];
