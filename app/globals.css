@@ -83,7 +83,8 @@
   }
   body {
     font-family: var(--font-sans);
-    background: var(--bg);
+    /* transparent so the fixed WebGL canvas (z-index -10) shows through; html paints --bg */
+    background: transparent;
     line-height: 1.5;
     overflow-x: clip;
     min-height: 100svh;
@@ -461,4 +462,9 @@ html:not(.reduce) .postmark {
 }
 html:not(.reduce) .glitch-layer {
   animation: glitch-x 2.4s steps(1) infinite;
+}
+
+/* once WebGL draws a plane, its DOM box must be see-through (the canvas sits behind) */
+html.gl-ready [data-gl-plane]:has(.gl-media[data-gl-on="1"]) {
+  background-color: transparent !important;
 }

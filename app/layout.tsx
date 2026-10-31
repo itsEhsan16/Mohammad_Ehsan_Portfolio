@@ -10,6 +10,7 @@ import { Cursor } from "@/components/chrome/Cursor";
 import { Toaster } from "@/components/chrome/Toaster";
 import { Preloader } from "@/components/chrome/Preloader";
 import { Footer } from "@/components/chrome/Footer";
+import { GLCanvas } from "@/components/gl/GLCanvas";
 import { FooterGate } from "@/components/chrome/FooterGate";
 import { jsonLd, personJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <span id="top" aria-hidden="true" />
         <AppProviders>
           <RouteWatcher />
+          <GLCanvas />
           <Hud />
           <Header />
           <MobileMenu />

@@ -63,3 +63,20 @@ export function onInkHost(l: (el: HTMLElement | null) => void) {
     inkListeners.delete(l);
   };
 }
+
+/** Running engine (or null). Typed loosely so this module never imports the engine bundle. */
+export interface EngineHandle {
+  morphCapture(from: HTMLElement): boolean;
+  morphExpand(duration?: number): Promise<void>;
+  morphLand(key: string, duration?: number): Promise<void>;
+  clearFloater(): void;
+  hasFloater(): boolean;
+  remeasure(): void;
+}
+let engine: EngineHandle | null = null;
+export function setEngine(e: EngineHandle | null) {
+  engine = e;
+}
+export function getEngine() {
+  return engine;
+}
