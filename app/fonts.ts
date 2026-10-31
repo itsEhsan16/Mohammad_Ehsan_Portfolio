@@ -33,6 +33,7 @@ export const instrument = localFont({
   ],
   variable: "--font-instrument",
   display: "swap",
+  preload: false,
   fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
