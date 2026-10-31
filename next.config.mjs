@@ -1,43 +1,39 @@
-import bundleAnalyzer from '@next/bundle-analyzer';
+import { execSync } from "node:child_process";
 
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-});
+function buildSha() {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "local";
+  }
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    unoptimized: true,
-  },
-  // Enable strict mode for better performance
   reactStrictMode: true,
-
-  // Experimental features for better performance
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  env: {
+    NEXT_PUBLIC_BUILD_SHA: buildSha(),
   },
-  // Security headers
+  images: {
+    formats: ["image/avif", "image/webp"],
+    qualities: [60, 75, 85],
+  },
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
     ];
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default nextConfig;
