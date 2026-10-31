@@ -21,7 +21,10 @@ export function ProjectMedia({
   rounded = true,
   sync = "cached",
   morphKey,
+  gl = true,
 }: {
+  /** Set false for DOM-only copies (e.g. hidden hover previews) so WebGL doesn't draw them. */
+  gl?: boolean;
   project: Project;
   variant?: PlaneVariant;
   sync?: "cached" | "live";
@@ -40,12 +43,13 @@ export function ProjectMedia({
     variant,
     sync,
     morphKey,
+    enabled: gl,
   });
 
   return (
     <div
       ref={ref}
-      data-gl-plane
+      data-gl-plane={gl ? "" : undefined}
       className={cn("relative aspect-[16/10] w-full overflow-hidden bg-surface", rounded && "rounded-[6px]", className)}
     >
       <div className="gl-media absolute inset-0">

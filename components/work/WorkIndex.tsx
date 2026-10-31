@@ -185,7 +185,7 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
       >
         {projects.map((p) => (
           <div key={p.slug} className={cn("absolute inset-x-0 top-0", hovered === p.slug ? "visible" : "invisible")}>
-            <ProjectMedia project={p} variant="plain" sizes="460px" />
+            <ProjectMedia project={p} variant="plain" sizes="460px" gl={false} />
           </div>
         ))}
       </div>

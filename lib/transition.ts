@@ -1,20 +1,22 @@
 "use client";
 
 import { getState, setState, subscribe } from "./store";
-import { scrollTo } from "./motion/lenis";
+import { getLenis, scrollTo } from "./motion/lenis";
 import { ScrollTrigger } from "./motion/gsap";
 import { whoosh } from "./audio";
 
 export interface TransitionOptions {
-  /** Text shown in the overlay, e.g. "/work/seva". */
+  /** Pathname being navigated to, e.g. "/work/seva". */
   label?: string;
   /** Element whose WebGL plane should morph into the next page (shared-element transition). */
   morphFrom?: HTMLElement | null;
 }
 
 export interface TransitionHooks {
-  cover(opts: TransitionOptions): Promise<void>;
-  reveal(opts: TransitionOptions): Promise<void>;
+  /** Cover the screen. Resolves when the old page can be swapped. Returns the kind actually used. */
+  cover(opts: TransitionOptions): Promise<"wipe" | "morph">;
+  /** Uncover. */
+  reveal(opts: TransitionOptions & { kind: "wipe" | "morph" }): Promise<void>;
 }
 
 type Router = { push: (href: string, opts?: { scroll?: boolean }) => void };
@@ -38,60 +40,85 @@ export function notifyPathChange(path: string) {
   pathWaiters.forEach((w) => w(path));
 }
 
-function waitForPath(path: string, timeout = 5000) {
-  return new Promise<void>((resolve) => {
-    if (currentPath === path) return resolve();
-    const done = () => {
+function waitForPath(path: string, timeout: number) {
+  return new Promise<boolean>((resolve) => {
+    if (currentPath === path) return resolve(true);
+    const done = (ok: boolean) => {
       pathWaiters.delete(check);
       window.clearTimeout(timer);
-      resolve();
+      resolve(ok);
     };
-    const check = (p: string) => p === path && done();
-    const timer = window.setTimeout(done, timeout);
+    const check = (p: string) => p === path && done(true);
+    const timer = window.setTimeout(() => done(false), timeout);
     pathWaiters.add(check);
   });
 }
 
 const raf2 = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-
-function withTimeout<T>(p: Promise<T>, ms: number) {
-  return Promise.race([p, new Promise<void>((r) => window.setTimeout(r, ms))]);
-}
+const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
 export function scrollToHash(hash: string, immediate = false) {
   if (!hash) return;
-  const el = document.getElementById(decodeURIComponent(hash.replace(/^#/, "")));
-  if (el) scrollTo(el, { immediate, offset: 0 });
+  const id = decodeURIComponent(hash.replace(/^#/, ""));
+  const el = id === "top" ? document.body : document.getElementById(id);
+  if (el) scrollTo(id === "top" ? 0 : el, { immediate, offset: 0 });
+}
+
+function focusHeading() {
+  const h1 = document.querySelector<HTMLElement>("main h1");
+  const main = document.getElementById("main");
+  const target = h1 ?? main;
+  if (!target) return;
+  if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+  target.focus({ preventScroll: true });
 }
 
 /**
- * Animated client navigation: cover → push → wait for the new route to commit →
- * reset scroll → reveal. Falls back to a plain push when nothing is registered.
+ * Animated client navigation:
+ * cover → reset scroll (under the cover) → push → wait for the route to commit →
+ * settle (fonts, layout, triggers) → reveal → focus the new heading.
+ * Falls back to a plain push with reduced motion, and to a hard navigation if
+ * the new route doesn't commit within 4 s.
  */
-export async function transitionTo(router: Router, href: string, opts: TransitionOptions = {}) {
+export async function transitionTo(router: Router, href: string, opts: Omit<TransitionOptions, "label"> = {}) {
   const url = new URL(href, window.location.href);
   if (busy) return;
   if (!hooks || document.documentElement.classList.contains("reduce")) {
-    router.push(href, { scroll: true });
+    router.push(url.pathname + url.search + url.hash, { scroll: true });
     return;
   }
   busy = true;
+  const main = document.getElementById("main");
   setState({ transitioning: true, menuOpen: false, cmdOpen: false });
   whoosh();
+  getLenis()?.stop();
+  if (main) main.inert = true;
   try {
-    await withTimeout(hooks.cover({ label: url.pathname, ...opts }), 1600);
+    const kind = await Promise.race([hooks.cover({ label: url.pathname, ...opts }), wait(1800).then(() => "wipe" as const)]);
+    getLenis()?.scrollTo(0, { immediate: true, force: true });
+    window.scrollTo(0, 0);
     router.push(url.pathname + url.search + url.hash, { scroll: false });
-    await waitForPath(url.pathname);
+    const arrived = await waitForPath(url.pathname, 4000);
+    if (!arrived) {
+      window.location.assign(href);
+      return;
+    }
+    await document.fonts.ready;
     await raf2();
-    scrollTo(0, { immediate: true });
+    getLenis()?.resize();
     ScrollTrigger.refresh();
     if (url.hash) scrollToHash(url.hash, true);
-    const reveal = hooks.reveal({ label: url.pathname, ...opts });
-    // let page intros start while the overlay lifts
+    getLenis()?.start();
+    // page intros start while the overlay lifts
     setState({ transitioning: false });
-    await withTimeout(reveal, 2000);
+    await Promise.race([hooks.reveal({ label: url.pathname, ...opts, kind }), wait(2400)]);
+    focusHeading();
   } finally {
     busy = false;
+    const newMain = document.getElementById("main");
+    if (newMain) newMain.inert = false;
+    if (main) main.inert = false;
+    getLenis()?.start();
     if (getState().transitioning) setState({ transitioning: false });
   }
 }

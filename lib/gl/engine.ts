@@ -120,6 +120,17 @@ class Plane {
 
   private async load() {
     const { spec } = this;
+    const key = spec.src ?? `poster:${spec.index}:${spec.title}`;
+    const cached = this.engine.textures.get(key);
+    if (cached) {
+      this.texture = cached.texture;
+      this.program.uniforms.tMap.value = cached.texture;
+      this.program.uniforms.uImage.value = [cached.w, cached.h];
+      this.ready = true;
+      gsap.to(this.state, { alpha: 1, duration: 0.4, ease: "power2.out" });
+      spec.el.querySelectorAll<HTMLElement>(".gl-media").forEach((m) => (m.dataset.glOn = "1"));
+      return;
+    }
     let source: TexImageSource | null = null;
     let w = 1600;
     let h = 1000;
@@ -150,6 +161,7 @@ class Plane {
       this.texture.image = source as HTMLImageElement;
       this.texture.needsUpdate = true;
       this.program.uniforms.uImage.value = [w, h];
+      this.engine.textures.set(key, { texture: this.texture, w, h });
       this.ready = true;
       gsap.to(this.state, { alpha: 1, duration: 0.6, ease: "power2.out" });
       spec.el.querySelectorAll<HTMLElement>(".gl-media").forEach((m) => (m.dataset.glOn = "1"));
@@ -451,6 +463,8 @@ export class Engine {
   private ink: InkField | null = null;
   private geo: Geometry;
   private uploads: (() => void)[] = [];
+  /** Uploaded textures by source key — reused across routes and by morph targets. */
+  textures = new Map<string, { texture: Texture; w: number; h: number }>();
   private floater: Plane | null = null;
   private off: (() => void)[] = [];
   private lost = false;

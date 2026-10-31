@@ -11,6 +11,8 @@ import { Toaster } from "@/components/chrome/Toaster";
 import { Preloader } from "@/components/chrome/Preloader";
 import { Footer } from "@/components/chrome/Footer";
 import { GLCanvas } from "@/components/gl/GLCanvas";
+import { TransitionLayer } from "@/components/transition/TransitionLayer";
+import { CommandMenuLoader } from "@/components/chrome/CommandMenuLoader";
 import { FooterGate } from "@/components/chrome/FooterGate";
 import { jsonLd, personJsonLd } from "@/lib/seo";
 import "./globals.css";
@@ -78,6 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <FooterGate>
             <Footer />
           </FooterGate>
+          <TransitionLayer />
+          <CommandMenuLoader />
           <Cursor />
           <Toaster />
           <Preloader />

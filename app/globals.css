@@ -468,3 +468,8 @@ html:not(.reduce) .glitch-layer {
 html.gl-ready [data-gl-plane]:has(.gl-media[data-gl-on="1"]) {
   background-color: transparent !important;
 }
+
+/* during a shared-element morph the incoming page waits until the plane lands */
+html[data-morphing] #main {
+  opacity: 0;
+}
