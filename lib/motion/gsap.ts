@@ -5,8 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { CustomEase } from "gsap/CustomEase";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
-import { Draggable } from "gsap/Draggable";
-import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { useGSAP } from "@gsap/react";
 
 let registered = false;
@@ -14,7 +12,7 @@ let registered = false;
 function register() {
   if (registered || typeof window === "undefined") return;
   registered = true;
-  gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase, ScrambleTextPlugin, Draggable, InertiaPlugin, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase, ScrambleTextPlugin, useGSAP);
   // Motion tokens (mirrors --ease-* in globals.css)
   CustomEase.create("expo", "0.16,1,0.3,1");
   CustomEase.create("spring", "0.34,1.56,0.64,1");
@@ -28,7 +26,7 @@ register();
 
 export const SCRAMBLE_CHARS = "01<>/\\[]{}—=+*^?#_";
 
-export { gsap, ScrollTrigger, SplitText, ScrambleTextPlugin, Draggable, InertiaPlugin, useGSAP };
+export { gsap, ScrollTrigger, SplitText, ScrambleTextPlugin, useGSAP };
 
 /** Motion preference as decided by the pre-paint script (OS setting or stored override). */
 export const reducedMotion = () => typeof document !== "undefined" && document.documentElement.classList.contains("reduce");

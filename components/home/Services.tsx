@@ -88,7 +88,7 @@ export function Services() {
             style={{ rotate: `${TILT[i] * 0.35}deg` }}
           >
             <div className="flex items-start justify-between">
-              <span className="t-label text-[11px] opacity-70">{step.step}</span>
+              <span className="t-label text-[11px] font-semibold">{step.step}</span>
               {step.tag && (
                 <span
                   className={cn(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Draggable, gsap, finePointer, motionOK } from "@/lib/motion/gsap";
+import { gsap, finePointer, motionOK } from "@/lib/motion/gsap";
 import { setState } from "@/lib/store";
 import { site } from "@/content/site";
 import { tick, click } from "@/lib/audio";
@@ -109,26 +109,45 @@ export function Stickers() {
     }
 
     let z = 10;
-    // drag only with a mouse/trackpad — on touch the stickers are just decoration
-    const draggables = !finePointer() ? [] : Draggable.create(els, {
-      type: "x,y",
-      bounds: root,
-      inertia: true,
-      zIndexBoost: false,
-      onPress() {
-        (this.target as HTMLElement).style.zIndex = String(++z);
-        gsap.to(this.target, { scale: 1.08, duration: 0.3, ease: "spring" });
-        tick();
+    let draggables: { kill: () => void }[] = [];
+    let cancelled = false;
+    // drag only with a mouse/trackpad — on touch the stickers are just decoration.
+    // Draggable + Inertia are loaded on demand to keep them out of the initial bundle.
+    const loadDrag = () =>
+      Promise.all([import("gsap/Draggable"), import("gsap/InertiaPlugin")]).then(([{ Draggable }, { InertiaPlugin }]) => {
+        if (cancelled) return;
+        gsap.registerPlugin(Draggable, InertiaPlugin);
+        draggables = Draggable.create(els, {
+          type: "x,y",
+          bounds: root,
+          inertia: true,
+          zIndexBoost: false,
+          onPress() {
+            (this.target as HTMLElement).style.zIndex = String(++z);
+            gsap.to(this.target, { scale: 1.08, duration: 0.3, ease: "spring" });
+            tick();
+          },
+          onRelease() {
+            gsap.to(this.target, { scale: 1, duration: 0.5, ease: "spring" });
+          },
+          onClick() {
+            click();
+            const id = (this.target as HTMLElement).dataset.sticker;
+            STICKERS.find((s) => s.id === id)?.onActivate?.();
+          },
+        });
+      });
+    // fetch the drag plugins only when the footer is about to be seen
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          void loadDrag();
+        }
       },
-      onRelease() {
-        gsap.to(this.target, { scale: 1, duration: 0.5, ease: "spring" });
-      },
-      onClick() {
-        click();
-        const id = (this.target as HTMLElement).dataset.sticker;
-        STICKERS.find((s) => s.id === id)?.onActivate?.();
-      },
-    });
+      { rootMargin: "50% 0px" },
+    );
+    if (finePointer()) io.observe(root);
 
     // holographic shine follows the pointer
     const shine = (e: PointerEvent) => {
@@ -141,6 +160,8 @@ export function Stickers() {
     holos.forEach((h) => h.addEventListener("pointermove", shine));
 
     return () => {
+      cancelled = true;
+      io.disconnect();
       draggables.forEach((d) => d.kill());
       holos.forEach((h) => h.removeEventListener("pointermove", shine));
     };

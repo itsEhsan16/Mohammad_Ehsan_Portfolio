@@ -26,8 +26,8 @@ export function Experience() {
                 {r.start} — {fmt(r.end)}
               </span>
               {r.current && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-signal/15 px-2 py-0.5 text-signal-text">
-                  <span className="live-dot !bg-signal" /> Now
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-signal px-2 py-0.5 font-semibold text-ink">
+                  <span className="live-dot !bg-ink" /> Now
                 </span>
               )}
             </p>

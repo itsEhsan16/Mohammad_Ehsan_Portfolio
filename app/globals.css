@@ -338,21 +338,21 @@ html:not(.reduce) .live-dot {
 
 /* selected-work reel: sticky horizontal track on desktop with motion, stacked otherwise */
 @media (min-width: 1024px) {
-  html:not(.reduce) .reel {
+  html.js:not(.reduce) .reel {
     height: calc(var(--n) * 100svh);
   }
-  html:not(.reduce) .reel-sticky {
+  html.js:not(.reduce) .reel-sticky {
     position: sticky;
     top: 0;
     height: 100svh;
     overflow: hidden;
   }
-  html:not(.reduce) .reel-track {
+  html.js:not(.reduce) .reel-track {
     display: flex;
     width: calc(var(--n) * 100vw);
     height: 100%;
   }
-  html:not(.reduce) .reel-slide {
+  html.js:not(.reduce) .reel-slide {
     width: 100vw;
     height: 100%;
     flex: none;
@@ -432,10 +432,10 @@ html:not(.reduce) .live-dot {
 
 /* next-project zone: sticky scroll-to-advance on desktop with motion */
 @media (min-width: 1024px) and (pointer: fine) {
-  html:not(.reduce) .next-zone {
+  html.js:not(.reduce) .next-zone {
     height: 175svh;
   }
-  html:not(.reduce) .next-sticky {
+  html.js:not(.reduce) .next-sticky {
     position: sticky;
     top: 0;
     min-height: 100svh;

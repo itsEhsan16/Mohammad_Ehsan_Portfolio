@@ -11,7 +11,7 @@ const sha = process.env.NEXT_PUBLIC_BUILD_SHA || "local";
 function Chip({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${className}`}>
-      <span className="text-faint">{k}::</span>
+      <span className="text-muted">{k}::</span>
       <span className="text-fg/80 tabular-nums">{children}</span>
     </span>
   );

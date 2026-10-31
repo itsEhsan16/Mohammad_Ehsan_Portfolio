@@ -88,7 +88,7 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
               )}
             >
               {f.label}
-              <span className="ml-1.5 opacity-60">
+              <span className="ml-1.5">
                 {pad(
                   projects.filter((p) =>
                     f.id === "all" ? true : f.id === "shipped" ? p.status !== "in-development" : p.status === "in-development",

@@ -86,7 +86,7 @@ export function Contact() {
     }
   };
 
-  const field = "peer w-full border-0 border-b border-fg/40 bg-transparent px-0 pb-3 pt-2 text-[clamp(1.1rem,1.6vw,1.45rem)] text-fg placeholder:text-faint focus:border-signal focus:outline-none focus:ring-0 transition-colors";
+  const field = "peer w-full border-0 border-b border-fg/40 bg-transparent px-0 pb-3 pt-2 text-[clamp(1.1rem,1.6vw,1.45rem)] text-fg placeholder:text-muted focus:border-signal focus:outline-none focus:ring-0 transition-colors";
 
   return (
     <section id="contact" aria-labelledby="contact-title" className="relative px-gutter py-[clamp(6rem,12vw,11rem)]">

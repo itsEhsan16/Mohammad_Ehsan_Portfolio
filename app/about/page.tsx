@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/content/site";
-import { capabilities } from "@/content/capabilities";
+import { toolbelt } from "@/content/capabilities";
 import { SplitReveal } from "@/components/ui/SplitReveal";
 import { SectionLabel, Chip } from "@/components/ui/SectionLabel";
 import { Stamp } from "@/components/about/Stamp";
@@ -59,7 +59,7 @@ export default function AboutPage() {
             <div>
               <p className="t-label text-muted">Toolbox</p>
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {capabilities.flatMap((c) => c.tags).map((t) => (
+                {toolbelt.map((t) => (
                   <Chip key={t}>{t}</Chip>
                 ))}
               </div>

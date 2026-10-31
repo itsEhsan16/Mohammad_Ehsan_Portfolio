@@ -19,7 +19,7 @@ export function SectionLabel({
       <span className="text-signal-text">{index}</span>
       <span aria-hidden="true">{"//"}</span>
       <span className="text-fg/85">{title}</span>
-      {typeof count === "number" && <span className="text-faint">({String(count).padStart(2, "0")})</span>}
+      {typeof count === "number" && <span className="text-muted">({String(count).padStart(2, "0")})</span>}
     </p>
   );
 }
