@@ -26,7 +26,8 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 
 **Chrome:**
 - HUD telemetry strip: IST clock, availability, FPS, build and scroll.
-- ⌘K command palette and a custom cursor with contextual labels.
+- ⌘K command palette.
+- A macOS-style pointer set (black fill, signal-orange outline): arrow, hand, I-beam over text, open and closed hands for dragging, a crosshair where the hero can be painted, and a copy pointer. Hints such as "Open" or "Drag" appear in a small tooltip beside it. A rainbow pinwheel spins beside the arrow while a page changes, and shaking the mouse makes the pointer grow, like macOS.
 - Ink/paper theme toggle with a circular reveal.
 - Optional synthesized UI sounds (Web Audio, off by default).
 - Draggable holographic stickers.
@@ -97,6 +98,7 @@ pnpm dev                     # http://localhost:3000
 | `?boot=1` | Force the boot preloader |
 | `?boot=0` | Skip the boot preloader |
 | `?view=grid` / `list` / `wheel` | Force a `/work` view for this visit |
+| `?cursor=mac` / `?cursor=system` | Force the Mac pointer or the system cursor for this visit |
 
 ## Editing content
 
@@ -130,6 +132,13 @@ Drop files at the documented paths and rebuild. They are picked up automatically
 | Portrait | `public/media/portrait.jpg` (4:5) |
 
 Prompts for every asset are in **[`docs/ASSET_PROMPTS.md`](docs/ASSET_PROMPTS.md)**.
+
+## The pointer
+
+- The cursors are native CSS image cursors in `public/cursors`, so the pointer itself never lags. Only the tooltip, the pinwheel and the shake effect are drawn with JS (`components/chrome/Cursor.tsx`).
+- `app/globals.css` decides which cursor shows where, under `html.mac-cursor`. The pre-paint script adds that class for mouse and trackpad users, but not for touch or forced-colours users, nor anyone who chose **Use system cursor** in ⌘K. That choice matters because image cursors ignore the OS cursor-size setting.
+- To edit a cursor, change `name.svg`, then copy it to `name@2x.svg` with `width` and `height` doubled. Safari uses the 2x file on Retina. If you move the tip, update the hotspot in `app/globals.css` (listed in `lib/cursor.ts`).
+- Each image is cropped to its glyph. Safari falls back to the system cursor near the window's right and bottom edges when an image would cross them, so smaller images keep that band thin.
 
 ## Environment variables
 
@@ -185,6 +194,7 @@ lib/
 - Skip link and real links and buttons throughout. Visible focus rings, plus `aria-live` for toasts and form status.
 - The split-text helpers keep screen-reader text intact.
 - Reduced motion is respected everywhere, including an override through the pre-paint script.
+- The custom pointer can be switched off from ⌘K ("Use system cursor") for anyone who relies on a larger OS cursor.
 - Initial JS on `/` is about 253 KB gzipped (React 19 + GSAP make up most of it). The WebGL chunk (about 43 KB) and the palette load later.
 
 ## Deployment

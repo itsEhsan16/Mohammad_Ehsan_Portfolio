@@ -10,6 +10,7 @@ import { transitionTo } from "@/lib/transition";
 import { toggleTheme } from "@/lib/theme";
 import { setSound, tick } from "@/lib/audio";
 import { copyEmail } from "./FooterBits";
+import { cursorCapable, setMacCursor } from "@/lib/cursor";
 import { getLenis } from "@/lib/motion/lenis";
 import { gsap } from "@/lib/motion/gsap";
 
@@ -24,6 +25,7 @@ const pages = [
 /** ⌘K command palette (cmdk) in a lightweight accessible modal — keyboard-first navigation and actions. */
 export default function CommandMenu() {
   const open = useApp((s) => s.cmdOpen);
+  const mac = useApp((s) => s.macCursor);
   const router = useRouter();
   const panel = useRef<HTMLDivElement>(null);
   const restore = useRef<HTMLElement | null>(null);
@@ -114,6 +116,15 @@ export default function CommandMenu() {
               >
                 Toggle interface sound
               </Item>
+              {cursorCapable() && (
+                <Item
+                  value="cursor pointer mouse mac system arrow"
+                  onSelect={() => run(() => setMacCursor(!mac))}
+                  hint={mac ? "mac → system" : "system → mac"}
+                >
+                  {mac ? "Use system cursor" : "Use Mac cursor"}
+                </Item>
+              )}
             </Command.Group>
             <Command.Group heading="Elsewhere">
               {site.socials.map((s) => (

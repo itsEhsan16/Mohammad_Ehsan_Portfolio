@@ -132,6 +132,8 @@ export function TitleReel({
       aria-roledescription={layout === "wheel" ? "project wheel" : "project list"}
       aria-label={`Work, as a ${layout}. Scroll, drag or use the arrow keys to move; press Enter to open the highlighted project.`}
       data-lenis-prevent
+      // the rows are links: a press-and-drag must move the strip, not start the browser's link drag
+      onDragStart={(e) => e.preventDefault()}
       style={{ "--wr-fs": `${geo.fs}px`, "--wr-pitch": `${geo.pitch}px` } as React.CSSProperties}
     >
       <div className="wf-bg" aria-hidden="true" />
@@ -140,7 +142,16 @@ export function TitleReel({
         {rows.map(({ k, item }) => {
           const p = projects[item];
           return (
-            <TransitionLink key={k} href={`/work/${p.slug}`} tabIndex={-1} className="wr-row" data-k={k} data-item={item} onMouseEnter={tick}>
+            <TransitionLink
+              key={k}
+              href={`/work/${p.slug}`}
+              tabIndex={-1}
+              draggable={false}
+              className="wr-row"
+              data-k={k}
+              data-item={item}
+              onMouseEnter={tick}
+            >
               <span className="wr-bullet" />
               <span className="wr-name">{p.title}</span>
               <span className="wr-tags">
@@ -157,7 +168,7 @@ export function TitleReel({
       <div className="wf-crt" aria-hidden="true" />
 
       <div ref={card} className="wr-card" data-reel-ui aria-hidden="true">
-        <TransitionLink href={`/work/${cur.slug}`} morph morphRef={media} tabIndex={-1} className="block">
+        <TransitionLink href={`/work/${cur.slug}`} morph morphRef={media} tabIndex={-1} draggable={false} className="block">
           <div ref={media} className="wr-card__media">
             {projects.map((p, i) => {
               const img = covers[i];

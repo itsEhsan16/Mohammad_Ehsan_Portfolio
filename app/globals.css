@@ -204,14 +204,147 @@ html:not(.reduce) .grain {
   100% { transform: translate(0, 0); }
 }
 
-/* custom cursor hides the native one only where it is active */
-html.has-cursor,
-html.has-cursor * {
+/*
+ * macOS-style pointer (public/cursors, black with a signal-orange outline), as native image cursors so the
+ * pointer itself never lags. On for mouse/trackpad users unless they chose the system cursor (⌘K).
+ * Every selector below is html.mac-cursor + :where(…) — the same specificity — so order decides.
+ * Literal values, never var(): an unsupported declaration must be dropped at parse time so the one before applies.
+ * The 1x/@2x pair keeps Safari sharp on Retina; hotspots are css px of the 1x file (lib/cursor.ts lists them).
+ */
+/* 1 · I-beam over text blocks (not inside links, buttons, drag/paint areas or unselectable UI) and in fields */
+html.mac-cursor
+  :where(p, h1, h2, h3, h4, h5, h6, dt, dd, blockquote, figcaption, pre, code, td, th, caption, li:not(:has(> :not(span, em, strong, b, i, small, code, br, svg)))):not(:where(a[href], area[href], button, summary, [role="button"], [role="link"], .cursor-pointer, [data-cursor], .select-none, .wf, .wr, .preloader, [role="img"]) *):not(:where(.select-none)),
+html.mac-cursor
+  :where(input:not([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"], [type="hidden"]), textarea, [contenteditable]:not([contenteditable="false"])) {
+  cursor: url("/cursors/ibeam.svg") 5 11, text;
+  cursor: -webkit-image-set(url("/cursors/ibeam.svg") 1x, url("/cursors/ibeam@2x.svg") 2x) 5 11, text;
+  cursor: image-set(url("/cursors/ibeam.svg") 1x, url("/cursors/ibeam@2x.svg") 2x) 5 11, text;
+}
+/* 2 · hand on anything clickable (descendants inherit it) */
+html.mac-cursor
+  :where(a[href], area[href], button, summary, select, [role="button"], [role="link"], input:is([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"]), .cursor-pointer),
+html.mac-cursor :where(.wf).is-over {
+  cursor: url("/cursors/hand.svg") 8 2, pointer;
+  cursor: -webkit-image-set(url("/cursors/hand.svg") 1x, url("/cursors/hand@2x.svg") 2x) 8 2, pointer;
+  cursor: image-set(url("/cursors/hand.svg") 1x, url("/cursors/hand@2x.svg") 2x) 8 2, pointer;
+}
+/* 3 · open hand on things you drag */
+html.mac-cursor :where(.wf, [data-cursor="drag"]) {
+  cursor: url("/cursors/grab.svg") 12 11, grab;
+  cursor: -webkit-image-set(url("/cursors/grab.svg") 1x, url("/cursors/grab@2x.svg") 2x) 12 11, grab;
+  cursor: image-set(url("/cursors/grab.svg") 1x, url("/cursors/grab@2x.svg") 2x) 12 11, grab;
+}
+/* 4 · copy */
+html.mac-cursor :where([data-cursor="copy"]) {
+  cursor: url("/cursors/copy.svg") 3 2, copy;
+  cursor: -webkit-image-set(url("/cursors/copy.svg") 1x, url("/cursors/copy@2x.svg") 2x) 3 2, copy;
+  cursor: image-set(url("/cursors/copy.svg") 1x, url("/cursors/copy@2x.svg") 2x) 3 2, copy;
+}
+/* 5 · crosshair where the hero name can be painted (only when WebGL is drawing it) */
+html.mac-cursor.gl-ready :where([data-cursor="paint"]) {
+  cursor: url("/cursors/crosshair.svg") 11 11, crosshair;
+  cursor: -webkit-image-set(url("/cursors/crosshair.svg") 1x, url("/cursors/crosshair@2x.svg") 2x) 11 11, crosshair;
+  cursor: image-set(url("/cursors/crosshair.svg") 1x, url("/cursors/crosshair@2x.svg") 2x) 11 11, crosshair;
+}
+/* 6 · arrow: the page itself, plus things that must not look clickable */
+html.mac-cursor,
+html.mac-cursor :where(label, option, optgroup, :disabled, [aria-disabled="true"], .cursor-default, .wf-hud, .wf-lbox, .wr) {
+  cursor: url("/cursors/arrow.svg") 3 2, default;
+  cursor: -webkit-image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
+  cursor: image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
+}
+/* 7 · page-wide states, which beat inline styles and whatever is under the pointer */
+html.mac-cursor.cursor-dragging,
+html.mac-cursor.cursor-dragging * {
+  cursor: url("/cursors/grabbing.svg") 12 10, grabbing !important;
+  cursor: -webkit-image-set(url("/cursors/grabbing.svg") 1x, url("/cursors/grabbing@2x.svg") 2x) 12 10, grabbing !important;
+  cursor: image-set(url("/cursors/grabbing.svg") 1x, url("/cursors/grabbing@2x.svg") 2x) 12 10, grabbing !important;
+}
+html.mac-cursor.cursor-busy,
+html.mac-cursor.cursor-busy * {
+  cursor: url("/cursors/arrow.svg") 3 2, progress !important;
+  cursor: -webkit-image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, progress !important;
+  cursor: image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, progress !important;
+}
+html.mac-cursor.cursor-shake,
+html.mac-cursor.cursor-shake * {
   cursor: none !important;
 }
-html.has-cursor input,
-html.has-cursor textarea {
-  cursor: text !important;
+
+/* the words beside the pointer (View, Open, Click to open…) */
+.cur-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 210;
+  padding: 5px 7px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--fg);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s;
+  will-change: transform;
+}
+.cur-tip.is-on {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .cur-tip {
+    display: none;
+  }
+}
+/* busy: a small spinning rainbow pinwheel beside the arrow while a page is changing */
+.cur-wheel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 211;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.65), transparent 45%),
+    conic-gradient(#ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #0a84ff, #5e5ce6, #bf5af2, #ff3b30);
+  box-shadow:
+    0 0 0 1px rgb(11 11 10 / 0.7),
+    0 1px 2px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  will-change: transform;
+}
+.cur-wheel.is-on {
+  opacity: 1;
+  transition-delay: 0.12s;
+}
+html:not(.reduce) .cur-wheel.is-on {
+  animation: cur-spin 0.9s linear infinite;
+}
+@keyframes cur-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+/* shake to find: a big copy of the arrow, anchored at its hotspot */
+.cur-big {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 220;
+  width: 20px;
+  height: 26px;
+  transform-origin: 3px 2px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* preloader: hidden unless the pre-paint script asks for it (no-JS never sees it), with a failsafe */
@@ -594,10 +727,12 @@ html[data-lightbox] .view-switch {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  cursor: grab;
   outline: none;
 }
-.wf.is-dragging {
+html:not(.mac-cursor) .wf {
+  cursor: grab;
+}
+html:not(.mac-cursor) .wf.is-dragging {
   cursor: grabbing;
 }
 .wf:focus-visible::after,
@@ -949,6 +1084,8 @@ html:not(.reduce) .wf-crt::after {
   text-transform: uppercase;
   color: var(--muted);
   background: linear-gradient(to top, color-mix(in oklab, var(--bg) 88%, transparent), transparent);
+}
+html:not(.mac-cursor) .wf-hud {
   cursor: auto;
 }
 .wf-chip {
@@ -973,34 +1110,9 @@ html:not(.reduce) .wf-crt::after {
   border-color: color-mix(in oklab, var(--fg) 50%, transparent);
 }
 
-/* cursor words */
+/* the field's "Click to open" words share the tooltip look (.cur-tip) and live inside the field */
 .wf-label {
-  position: fixed;
-  left: 0;
-  top: 0;
   z-index: 48;
-  padding: 5px 7px 4px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--fg);
-  background: color-mix(in oklab, var(--bg) 72%, transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s;
-  will-change: transform;
-}
-.wf-label.is-on {
-  opacity: 1;
-}
-@media (pointer: coarse) {
-  .wf-label {
-    display: none;
-  }
 }
 
 /* the open picture */

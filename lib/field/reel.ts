@@ -2,6 +2,7 @@
 
 import { gsap } from "@/lib/motion/gsap";
 import { getFieldBackdrop, setFieldBackdrop, type FieldBackdropState } from "@/lib/gl/registry";
+import { setDragging } from "@/lib/cursor";
 
 export type ReelLayout = "list" | "wheel";
 
@@ -199,6 +200,7 @@ export class ReelController {
         d.far = true;
         d.y = e.clientY;
         r.classList.add("is-dragging");
+        setDragging(true);
         try {
           r.setPointerCapture(e.pointerId);
         } catch {}
@@ -228,6 +230,7 @@ export class ReelController {
         window.setTimeout(() => (this.suppressClick = false), 0);
         this.lastInput = performance.now();
         r.classList.remove("is-dragging");
+        setDragging(false);
         try {
           r.releasePointerCapture(e.pointerId);
         } catch {}
@@ -395,6 +398,7 @@ export class ReelController {
   destroy() {
     gsap.ticker.remove(this.tick);
     this.off.forEach((f) => f());
+    if (this.drag.on && this.drag.far) setDragging(false);
     if (getFieldBackdrop() === this.backdrop) setFieldBackdrop(null);
   }
 }

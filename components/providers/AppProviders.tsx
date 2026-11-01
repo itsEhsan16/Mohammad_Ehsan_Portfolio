@@ -14,7 +14,7 @@ import { initSound } from "@/lib/audio";
  */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    setState({ theme: readTheme(), sound: initSound() });
+    setState({ theme: readTheme(), sound: initSound(), macCursor: document.documentElement.classList.contains("mac-cursor") });
 
     let lenis: Lenis | null = null;
     const tick = (time: number) => lenis?.raf(time * 1000);

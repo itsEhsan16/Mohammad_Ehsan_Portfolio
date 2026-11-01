@@ -5,6 +5,7 @@ import { gsap, finePointer, motionOK } from "@/lib/motion/gsap";
 import { setState } from "@/lib/store";
 import { site } from "@/content/site";
 import { tick, click } from "@/lib/audio";
+import { setDragging } from "@/lib/cursor";
 
 type StickerDef = {
   id: string;
@@ -122,12 +123,17 @@ export function Stickers() {
           bounds: root,
           inertia: true,
           zIndexBoost: false,
+          // the stylesheet owns the cursor (open hand, closed hand while dragging): at runtime `false`
+          // tells Draggable to set no inline cursor at all, though its types only admit strings
+          cursor: false as unknown as string,
           onPress() {
+            setDragging(true);
             (this.target as HTMLElement).style.zIndex = String(++z);
             gsap.to(this.target, { scale: 1.08, duration: 0.3, ease: "spring" });
             tick();
           },
           onRelease() {
+            setDragging(false);
             gsap.to(this.target, { scale: 1, duration: 0.5, ease: "spring" });
           },
           onClick() {
@@ -163,6 +169,7 @@ export function Stickers() {
       cancelled = true;
       io.disconnect();
       draggables.forEach((d) => d.kill());
+      setDragging(false);
       holos.forEach((h) => h.removeEventListener("pointermove", shine));
     };
   }, []);

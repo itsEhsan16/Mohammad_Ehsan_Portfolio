@@ -414,7 +414,7 @@ export function WorkField({
         </div>
       </div>
 
-      <div ref={label} className="wf-label" aria-hidden="true" data-open="Click to open" data-close="Click to close" />
+      <div ref={label} className="cur-tip wf-label" aria-hidden="true" data-open="Click to open" data-close="Click to close" />
       <p className="sr-only" aria-live="polite">
         {announce}
       </p>

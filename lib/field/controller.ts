@@ -2,6 +2,7 @@
 
 import { gsap } from "@/lib/motion/gsap";
 import { getFieldBackdrop, setFieldBackdrop, type FieldBackdropState } from "@/lib/gl/registry";
+import { setDragging } from "@/lib/cursor";
 import type { FieldGeometry } from "./geometry";
 
 /**
@@ -249,6 +250,7 @@ export class FieldController {
       this.drag = { on: true, id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, far: false, vx: 0, vy: 0, t: performance.now() };
       this.kbd = false;
       r.classList.add("is-dragging");
+      setDragging(true);
       try {
         r.setPointerCapture(e.pointerId);
       } catch {}
@@ -342,6 +344,7 @@ export class FieldController {
     } catch {}
     d.id = -1;
     this.root.classList.remove("is-dragging");
+    setDragging(false);
     this.updateLabel();
   }
 
@@ -385,15 +388,24 @@ export class FieldController {
 
   /* ───────────── cursor label ───────────── */
 
+  private labelW = 90;
+
+  /** Beside the pointer like a tooltip (+18, +22), flipped near the right and bottom edges. */
   private moveLabel() {
     const el = this.ui.label;
     if (!el || this.pointer.type !== "mouse") return;
-    const w = el.offsetWidth || 90;
-    const x = this.pointer.x + 20 + w > this.geo.W ? this.pointer.x - 20 - w : this.pointer.x + 20;
-    el.style.transform = `translate3d(${x}px,${this.pointer.y - 7}px,0)`;
+    const w = this.labelW;
+    const x = this.pointer.x + 18 + w > this.geo.W - 8 ? this.pointer.x - 10 - w : this.pointer.x + 18;
+    const y = this.pointer.y + 22 + 22 > this.geo.H - 8 ? this.pointer.y - 30 : this.pointer.y + 22;
+    el.style.transform = `translate3d(${x}px,${y}px,0)`;
   }
 
   private updateLabel() {
+    // the hand over a card (the field itself shows the open hand)
+    this.root.classList.toggle(
+      "is-over",
+      this.over >= 0 && this.pointer.in && this.pointer.type === "mouse" && !this.locked && !(this.drag.on && this.drag.far),
+    );
     const el = this.ui.label;
     if (!el) return;
     let text = "";
@@ -404,7 +416,11 @@ export class FieldController {
     }
     if (text === this.labelText) return;
     this.labelText = text;
-    if (text) el.textContent = text;
+    if (text) {
+      el.textContent = text;
+      this.labelW = el.offsetWidth || this.labelW;
+      this.moveLabel();
+    }
     el.classList.toggle("is-on", !!text);
   }
 
@@ -609,6 +625,8 @@ export class FieldController {
   destroy() {
     gsap.ticker.remove(this.tick);
     this.off.forEach((f) => f());
+    if (this.drag.on) setDragging(false);
+    this.root.classList.remove("is-over", "is-dragging");
     this.timers.forEach((t) => window.clearTimeout(t));
     window.clearTimeout(this.scaleTimer);
     if (getFieldBackdrop() === this.backdrop) setFieldBackdrop(null);
