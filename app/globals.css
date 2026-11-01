@@ -79,6 +79,10 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    /* Keeps body's clip on body. Without this, body's overflow passes up to the
+       viewport. Phones then widen the page for content that sticks out (tilted
+       cards, the stamp's ring), which pushes fixed UI past the right edge. */
+    overflow-x: clip;
   }
   body {
     font-family: var(--font-sans);
