@@ -8,7 +8,7 @@ export function Capabilities() {
     <section id="capabilities" aria-labelledby="cap-title" className="relative py-[clamp(6rem,12vw,11rem)]">
       <div className="grid grid-cols-12 gap-6 px-gutter">
         <div className="col-span-12 lg:col-span-3">
-          <SectionLabel index="03" title="Capabilities" count={capabilities.length} />
+          <SectionLabel index="02" title="Capabilities" count={capabilities.length} />
         </div>
         <div className="col-span-12 lg:col-span-9">
           <SplitReveal as="h2" type="lines" id="cap-title" className="text-section max-w-[18ch] font-medium leading-[1.02] tracking-[-0.03em]">

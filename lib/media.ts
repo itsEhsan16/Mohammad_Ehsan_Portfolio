@@ -1,8 +1,10 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { projects } from "@/content/projects";
 import type { Project } from "@/content/types";
+import type { HeroFigure } from "@/lib/gl/figure";
 
 /** True when `src` (a public URL path like "/media/x.jpg") exists in /public at build time. */
 export function publicFileExists(src?: string) {
@@ -84,4 +86,37 @@ export function imageSize(src: string): { w: number; h: number } | undefined {
     }
   }
   return undefined;
+}
+
+const HERO_DIR = "/media/hero";
+
+/**
+ * The home scene's figure, checked at build time:
+ *   - `me.glb`: your model. Without it the scene shows the stand-in mannequin.
+ *   - `me.json` (optional): `{ "yaw": 0, "height": 1.8, "clip": "idle" }`.
+ *   - `figure.webp` (optional): the cut-out still for phones, exported with `/?figure=still` in dev.
+ * The GLB URL carries a content hash, so a new model is never served from cache.
+ */
+export function heroFigure(): HeroFigure {
+  const abs = (p: string) => path.join(process.cwd(), "public", p.replace(/^\//, ""));
+  let src: string | null = null;
+  if (publicFileExists(`${HERO_DIR}/me.glb`)) {
+    const hash = createHash("sha1").update(fs.readFileSync(abs(`${HERO_DIR}/me.glb`))).digest("hex").slice(0, 8);
+    src = `${HERO_DIR}/me.glb?v=${hash}`;
+  }
+  let cfg: Record<string, unknown> = {};
+  try {
+    cfg = JSON.parse(fs.readFileSync(abs(`${HERO_DIR}/me.json`), "utf8"));
+  } catch {}
+  const num = (v: unknown, d: number, min: number, max: number) =>
+    typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d;
+  const stillSrc = `${HERO_DIR}/figure.webp`;
+  const size = imageSize(stillSrc);
+  return {
+    src,
+    still: size ? { src: stillSrc, ...size } : null,
+    yaw: num(cfg.yaw, 0, -180, 180),
+    height: num(cfg.height, 1.8, 1, 2.4),
+    clip: typeof cfg.clip === "string" && cfg.clip ? cfg.clip : null,
+  };
 }

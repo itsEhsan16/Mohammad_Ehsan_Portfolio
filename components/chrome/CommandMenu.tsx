@@ -15,13 +15,7 @@ import { music } from "@/lib/music/player";
 import { getLenis } from "@/lib/motion/lenis";
 import { gsap } from "@/lib/motion/gsap";
 
-const pages = [
-  { label: "Home", href: "/", hint: "/" },
-  { label: "Work", href: "/work", hint: "/work" },
-  { label: "About", href: "/about", hint: "/about" },
-  { label: "Services", href: "/#services", hint: "#services" },
-  { label: "Contact", href: "/#contact", hint: "#contact" },
-];
+const pages = [{ label: "Home", href: "/" }, ...site.nav].map((p) => ({ ...p, hint: p.href }));
 
 /** ⌘K command palette (cmdk) in a lightweight accessible modal — keyboard-first navigation and actions. */
 export default function CommandMenu() {

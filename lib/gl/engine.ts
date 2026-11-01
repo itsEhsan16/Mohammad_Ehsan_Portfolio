@@ -8,12 +8,17 @@ import {
   getFieldBackdrop,
   getInkHost,
   getPlanes,
+  getSceneHost,
   onFieldBackdrop,
   onInkHost,
   onPlanes,
+  onSceneHost,
   type FieldBackdropState,
+  type InkHostSpec,
   type PlaneSpec,
+  type SceneSpec,
 } from "./registry";
+import type { HeroScene } from "./scene";
 import { backdropFieldFrag, backdropFrag, inkFrag, planeFrag, planeVert, simFrag, simVert } from "./shaders";
 import { posterCanvas, textMaskCanvas } from "./poster";
 
@@ -258,8 +263,13 @@ class Plane {
 
 /* ───────────────────────── hero ink field ───────────────────────── */
 
+/** Brush radius of the paint trail, in CSS px. */
+const BRUSH = 24;
+
 class InkField {
   host: HTMLElement;
+  /** the area the paint trail covers (the whole home stage) */
+  domain: HTMLElement;
   mesh: Mesh;
   program: Program;
   mask: Texture;
@@ -275,16 +285,21 @@ class InkField {
   private lastInput = -1e9;
   private maskDirty = true;
   private off: (() => void)[] = [];
+  /** trail domain rect (CSS px) */
   private rect: Rect = { left: 0, top: 0, width: 1, height: 1 };
+  /** name rect (CSS px) */
+  private nameRect: Rect = { left: 0, top: 0, width: 1, height: 1 };
 
   constructor(
     private engine: Engine,
-    host: HTMLElement,
+    spec: InkHostSpec,
   ) {
     const gl = engine.gl;
+    const host = spec.el;
     this.host = host;
+    this.domain = spec.domain;
     this.mask = new Texture(gl, { generateMipmaps: true, minFilter: gl.LINEAR_MIPMAP_LINEAR, magFilter: gl.LINEAR });
-    const r0 = host.getBoundingClientRect();
+    const r0 = this.domain.getBoundingClientRect();
     const scale = Math.min(1, 512 / Math.max(r0.width, r0.height, 1));
     const w = Math.max(64, Math.round(r0.width * scale));
     const h = Math.max(32, Math.round(r0.height * scale));
@@ -321,6 +336,7 @@ class InkField {
       uniforms: {
         tMask: { value: this.mask },
         tTrail: { value: this.rtA.texture },
+        uTrailMap: { value: [0, 0, 1, 1] },
         uRect: { value: [0, 0, 1, 1] },
         uViewport: { value: [1, 1] },
         uBend: { value: 0 },
@@ -352,7 +368,7 @@ class InkField {
       this.force = Math.min(0.85, 0.12 + speed * 0.018);
     };
     const onDown = (e: PointerEvent) => {
-      const r = this.rect;
+      const r = this.nameRect;
       const x = (e.clientX - r.left) / r.width;
       const y = 1 - (e.clientY - r.top) / r.height;
       if (x < 0 || x > 1 || y < 0 || y > 1) return;
@@ -391,18 +407,34 @@ class InkField {
     });
   }
 
+  /** The current paint trail (red channel), covering the domain. */
+  get trail() {
+    return this.rtA.texture;
+  }
+
+  /** The name's text mask and its box (CSS px), for the home scene's knock-out. */
+  get nameMask() {
+    return { mask: this.mask, rect: this.nameRect };
+  }
+
   draw(renderer: Renderer, W: number, H: number, t: number, dt: number) {
     const r = this.host.getBoundingClientRect();
-    this.rect = { left: r.left, top: r.top, width: Math.max(1, r.width), height: Math.max(1, r.height) };
+    const d = this.domain === this.host ? r : this.domain.getBoundingClientRect();
+    this.nameRect = { left: r.left, top: r.top, width: Math.max(1, r.width), height: Math.max(1, r.height) };
+    this.rect = { left: d.left, top: d.top, width: Math.max(1, d.width), height: Math.max(1, d.height) };
     if (r.bottom < -50 || r.top > H + 50) return;
     if (this.maskDirty) this.rebuildMask();
 
-    // idle autopilot: a slow signature curve across the name
+    // idle autopilot: a slow signature curve across the name (in name space, mapped into the trail domain)
     const now = performance.now();
     if (now - this.lastInput > 2600) {
       const k = t * 0.55;
-      const x = 0.5 + 0.42 * Math.sin(k * 0.9) * Math.cos(k * 0.31);
-      const y = 0.5 + 0.34 * Math.sin(k * 1.37 + 0.6);
+      const nx = 0.5 + 0.42 * Math.sin(k * 0.9) * Math.cos(k * 0.31);
+      const ny = 0.5 + 0.34 * Math.sin(k * 1.37 + 0.6);
+      const n = this.nameRect;
+      const D = this.rect;
+      const x = (n.left + nx * n.width - D.left) / D.width;
+      const y = 1 - (n.top + (1 - ny) * n.height - D.top) / D.height;
       if (this.p1.x < -0.5) this.p1 = { x, y };
       this.p0 = { ...this.p1 };
       this.p1 = { x, y };
@@ -415,6 +447,7 @@ class InkField {
     su.uP0.value = [this.p0.x, this.p0.y];
     su.uP1.value = [this.p1.x, this.p1.y];
     su.uForce.value = this.force;
+    su.uRadius.value = BRUSH / this.rect.height;
     su.uDecay.value = Math.pow(0.968, dt * 60);
     renderer.render({ scene: this.sim, target: this.rtB, clear: false, frustumCull: false, sort: false });
     [this.rtA, this.rtB] = [this.rtB, this.rtA];
@@ -437,6 +470,14 @@ class InkField {
 
     const u = this.program.uniforms;
     u.tTrail.value = this.rtA.texture;
+    // name uv → trail uv (both y-up)
+    const D = this.rect;
+    u.uTrailMap.value = [
+      (r.left - D.left) / D.width,
+      1 - (r.top - D.top + r.height) / D.height,
+      r.width / D.width,
+      r.height / D.height,
+    ];
     u.uRect.value = [r.left, r.top, r.width, r.height];
     u.uViewport.value = [W, H];
     u.uPlane.value = [r.width, r.height];
@@ -457,6 +498,8 @@ class InkField {
     this.off.forEach((f) => f());
     gsap.killTweensOf(this.reveal);
     this.host.querySelectorAll<HTMLElement>(".gl-media").forEach((m) => delete m.dataset.glOn);
+    this.engine.freeTarget(this.rtA);
+    this.engine.freeTarget(this.rtB);
   }
 }
 
@@ -642,6 +685,8 @@ export class Engine {
   private planes = new Map<PlaneSpec, Plane>();
   private ink: InkField | null = null;
   private backdrop: Backdrop | null = null;
+  private scene: HeroScene | null = null;
+  private sceneSeq = 0;
   private geo: Geometry;
   private uploads: (() => void)[] = [];
   /** Uploaded textures by source key — reused across routes and by morph targets. */
@@ -676,11 +721,13 @@ export class Engine {
     getPlanes().forEach((s) => this.add(s));
     this.off.push(
       onPlanes((type, spec) => (type === "add" ? this.add(spec) : this.remove(spec))),
-      onInkHost((el) => this.setInk(el)),
+      onInkHost((spec) => this.setInk(spec)),
       onFieldBackdrop((st) => this.setBackdrop(st)),
+      onSceneHost((spec) => this.setScene(spec)),
     );
     this.setInk(getInkHost());
     this.setBackdrop(getFieldBackdrop());
+    this.setScene(getSceneHost());
 
     const onResize = () => {
       this.W = window.innerWidth;
@@ -696,6 +743,7 @@ export class Engine {
       this.planes.forEach((p) => p.setColors(this.colors));
       this.ink?.setColors(this.colors);
       this.backdrop?.setColors(this.colors);
+      this.scene?.setColors(this.colors);
       this.floater?.setColors(this.colors);
     };
     const onLost = (e: Event) => {
@@ -753,10 +801,20 @@ export class Engine {
     return this.H;
   }
 
+  /** True once the WebGL context was lost: its objects are gone, so nothing may be deleted. */
+  get contextLost() {
+    return this.lost;
+  }
+
+  /** Delete a render target: framebuffer, every colour attachment and any depth buffer. */
   freeTarget(rt: RenderTarget) {
+    if (this.lost) return;
     const gl = this.gl;
+    const x = rt as RenderTarget & { depthBuffer?: WebGLRenderbuffer; depthTexture?: Texture };
     gl.deleteFramebuffer(rt.buffer);
-    gl.deleteTexture(rt.texture.texture);
+    rt.textures.forEach((t) => gl.deleteTexture(t.texture));
+    if (x.depthBuffer) gl.deleteRenderbuffer(x.depthBuffer);
+    if (x.depthTexture) gl.deleteTexture(x.depthTexture.texture);
   }
 
   queueUpload(fn: () => void) {
@@ -781,10 +839,23 @@ export class Engine {
     this.backdrop = state ? new Backdrop(this, state) : null;
   }
 
-  private setInk(el: HTMLElement | null) {
-    if (this.ink && this.ink.host === el) return;
+  private setInk(spec: InkHostSpec | null) {
+    if (this.ink && spec && this.ink.host === spec.el && this.ink.domain === spec.domain) return;
     this.ink?.destroy();
-    this.ink = el ? new InkField(this, el) : null;
+    this.ink = spec ? new InkField(this, spec) : null;
+  }
+
+  /** The home stage's 3D scene: its code is only fetched when a stage is on the page. */
+  private setScene(spec: SceneSpec | null) {
+    if (this.scene && this.scene.spec === spec) return;
+    const seq = ++this.sceneSeq;
+    this.scene?.destroy();
+    this.scene = null;
+    if (!spec) return;
+    void import("./scene").then((m) => {
+      if (seq !== this.sceneSeq || this.destroyed || this.lost) return;
+      this.scene = new m.HeroScene(this, spec);
+    });
   }
 
   remeasure() {
@@ -907,15 +978,22 @@ export class Engine {
     const up = this.uploads.shift();
     if (up) up();
 
+    // offscreen passes bind their own targets, so they go before the canvas is cleared
+    this.scene?.renderOffscreen(t, dt);
+
     this.renderer.bindFramebuffer();
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    this.renderer.setViewport(gl.drawingBufferWidth, gl.drawingBufferHeight);
     const [r, g, b] = this.colors.bg;
     gl.clearColor(r, g, b, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    // home stage: ground, then the painted name, then the figure in front of it
+    const trail = this.ink && this.scene && this.ink.domain === this.scene.spec.el ? this.ink.trail : null;
     this.backdrop?.draw(this.renderer, t, dt);
     this.planes.forEach((p) => p.draw(this.renderer, y, this.W, this.H, t, dt, velocity));
+    this.scene?.composite(0, trail, this.W, this.H, trail ? this.ink!.nameMask : null);
     this.ink?.draw(this.renderer, this.W, this.H, t, dt);
+    this.scene?.composite(1, trail, this.W, this.H);
     this.floater?.draw(this.renderer, y, this.W, this.H, t, dt, 0);
   };
 
@@ -927,6 +1005,8 @@ export class Engine {
     this.planes.clear();
     this.ink?.destroy();
     this.backdrop?.destroy();
+    this.scene?.destroy();
+    this.sceneSeq++;
     this.floater?.destroy();
     document.documentElement.classList.remove("gl-ready");
     if (loseContext) this.gl.getExtension("WEBGL_lose_context")?.loseContext();

@@ -174,6 +174,7 @@ precision highp float;
 ${common}
 uniform sampler2D tMask;
 uniform sampler2D tTrail;
+uniform vec4 uTrailMap;   // name uv → trail uv: offset (xy), scale (zw)
 uniform vec2 uPlane;      // CSS px
 uniform float uDpr;
 uniform float uPitch;
@@ -189,7 +190,7 @@ void main() {
   vec2 cell = (floor(p / uPitch) + 0.5) * uPitch;
   float lod = log2(max(uPitch * uDpr, 1.0));
   float cov = textureLod(tMask, cell / uPlane, lod).a;
-  float ink = texture(tTrail, vUv).r;
+  float ink = texture(tTrail, vUv * uTrailMap.zw + uTrailMap.xy).r;
   float k = smoothstep(0.08, 0.55, ink);
 
   float rip = 0.0;

@@ -256,6 +256,12 @@ html.mac-cursor :where(label, option, optgroup, :disabled, [aria-disabled="true"
   cursor: -webkit-image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
   cursor: image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
 }
+/* dragging something (the home stage, a sticker, the scrollbar) never selects text */
+html.cursor-dragging,
+html.cursor-dragging * {
+  -webkit-user-select: none;
+  user-select: none;
+}
 /* 7 · page-wide states, which beat inline styles and whatever is under the pointer */
 html.mac-cursor.cursor-dragging,
 html.mac-cursor.cursor-dragging * {
@@ -485,27 +491,24 @@ html:not(.reduce) .live-dot {
   transform: scaleX(var(--mark));
 }
 
-/* selected-work reel: sticky horizontal track on desktop with motion, stacked otherwise */
-@media (min-width: 1024px) {
-  html.js:not(.reduce) .reel {
-    height: calc(var(--n) * 100svh);
-  }
-  html.js:not(.reduce) .reel-sticky {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    overflow: hidden;
-  }
-  html.js:not(.reduce) .reel-track {
-    display: flex;
-    width: calc(var(--n) * 100vw);
-    height: 100%;
-  }
-  html.js:not(.reduce) .reel-slide {
-    width: 100vw;
-    height: 100%;
-    flex: none;
-  }
+/* home stage: the server-drawn ground (dot screen masked by the skyline) */
+.stage-dots {
+  background-image: radial-gradient(circle, currentColor 0.8px, transparent 1px);
+  background-size: 3px 3px;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+/* live readouts and the hint only mean something while the scene runs */
+html:not(.gl-ready) .stage-readout,
+html:not(.gl-ready) .stage-hint {
+  visibility: hidden;
+}
+
+/* /contact already is the call to action, so the footer drops its own */
+[data-footer-route="contact"] [data-footer-cta] {
+  display: none;
 }
 
 /* capabilities rows */
