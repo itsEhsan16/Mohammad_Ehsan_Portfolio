@@ -1,28 +1,23 @@
-import { Header } from "@/components/header"
-import { Expertise } from "@/components/expertise"
-import { Projects } from "@/components/projects"
-import { Experience } from "@/components/experience"
-import { Contact } from "@/components/contact"
-import { Footer } from "@/components/footer"
-import { VerticalNav } from "@/components/vertical-nav"
-import HeroClientWrapper from "@/components/DynamicHero"
+import { Hero } from "@/components/home/Hero";
+import { Manifesto } from "@/components/home/Manifesto";
+import { WorkReel } from "@/components/home/WorkReel";
+import { Capabilities } from "@/components/home/Capabilities";
+import { Services } from "@/components/home/Services";
+import { Experience } from "@/components/home/Experience";
+import { Contact } from "@/components/home/Contact";
+import { resolvedProjects } from "@/lib/media";
 
 export default function Home() {
+  const projects = resolvedProjects();
   return (
-    <main className="min-h-screen">
-      <Header />
-      <HeroClientWrapper />
-      
-      {/* Add spacing between major sections */}
-      <div className="space-y-16 sm:space-y-20 lg:space-y-24">
-        <Expertise />
-        <Projects />
-        <Experience />
-        <Contact />
-      </div>
-      
-      <Footer />
-      <VerticalNav />
+    <main id="main" tabIndex={-1} className="outline-none">
+      <Hero />
+      <Manifesto />
+      <WorkReel projects={projects} />
+      <Capabilities />
+      <Services />
+      <Experience />
+      <Contact />
     </main>
-  )
+  );
 }

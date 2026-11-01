@@ -1,74 +1,475 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+/* ───────────────────────── variants ───────────────────────── */
+@custom-variant paper (&:where([data-theme="paper"], [data-theme="paper"] *));
+@custom-variant fine (@media (pointer: fine));
+@custom-variant coarse (@media (pointer: coarse));
+@custom-variant motion-ok (&:where(:root:not(.reduce) *));
+@custom-variant reduce (&:where(:root.reduce *));
+@custom-variant no-gl (&:where(.no-gl, .no-gl *));
 
-    --card: 222.2 84% 6.9%;
-    --card-foreground: 210 40% 98%;
+/* ───────────────────────── tokens ───────────────────────── */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-signal: var(--signal);
+  --color-signal-text: var(--signal-text);
+  --color-live: var(--live);
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  /* fixed brand colors (never flip with the theme) */
+  --color-ink: #0b0b0a;
+  --color-graphite: #161615;
+  --color-bone: #edeae4;
+  --color-orange: #ff4d00;
 
-    --primary: 20.5 90.2% 48.2%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  --font-display: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: var(--font-instrument), Georgia, "Times New Roman", serif;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    --radius: 0.5rem;
-  }
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-quint: cubic-bezier(0.83, 0, 0.17, 1);
 }
 
+:root {
+  /* font stacks (next/font defines --font-archivo etc. on <html>) */
+  --font-display: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: var(--font-instrument), Georgia, "Times New Roman", serif;
+
+  --bg: #0b0b0a;
+  --fg: #edeae4;
+  --muted: #8c8a85;
+  --faint: #4b4a46;
+  --line: rgb(237 234 228 / 0.12);
+  --surface: #161615;
+  --signal: #ff4d00;
+  --signal-text: #ff5a14;
+  --live: #3ddc84;
+
+  --gutter: clamp(16px, 2.5vw, 40px);
+  --hud-h: 26px;
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  --bg: #edeae4;
+  --fg: #0b0b0a;
+  --muted: #5d5b56;
+  --faint: #aaa69d;
+  --line: rgb(11 11 10 / 0.14);
+  --surface: #e2ded5;
+  --signal-text: #b83600;
+  color-scheme: light;
+}
+
+/* ───────────────────────── base ───────────────────────── */
 @layer base {
-  * {
-    @apply border-border;
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    scrollbar-gutter: stable;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans);
+    /* transparent so the fixed WebGL canvas (z-index -10) shows through; html paints --bg */
+    background: transparent;
+    line-height: 1.5;
+    overflow-x: clip;
+    min-height: 100svh;
+  }
+  ::selection {
+    background: var(--signal);
+    color: #0b0b0a;
+  }
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  button {
+    cursor: pointer;
+  }
+  img,
+  video,
+  canvas,
+  svg {
+    display: block;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-weight: inherit;
+    font-size: inherit;
   }
 }
 
-html {
-  scroll-behavior: smooth;
+/* ───────────────────────── type utilities ───────────────────────── */
+@utility t-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 450;
 }
 
-/* Enhanced spacing and layout utilities */
-@layer utilities {
-  .container-wide {
-    @apply container mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20;
+@utility t-display {
+  font-family: var(--font-display);
+  font-weight: 860;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  line-height: 0.84;
+  letter-spacing: -0.035em;
+}
+
+@utility t-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+@utility px-gutter {
+  padding-inline: var(--gutter);
+}
+
+@utility text-giant {
+  font-size: clamp(4.25rem, 18.6vw, 28rem);
+}
+
+@utility text-huge {
+  font-size: clamp(3.25rem, 11vw, 15rem);
+}
+
+@utility text-big {
+  font-size: clamp(2.5rem, 7vw, 8.5rem);
+}
+
+@utility text-section {
+  font-size: clamp(2rem, 4.6vw, 4.75rem);
+}
+
+/* faint 12-column blueprint guides */
+@utility guides {
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+  background-size: calc((100% - 2 * var(--gutter)) / 12) 100%;
+  background-position: var(--gutter) 0;
+  background-repeat: repeat-x;
+}
+
+/* ───────────────────────── chrome ───────────────────────── */
+.grain {
+  position: fixed;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  z-index: 80;
+  opacity: 0.075;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.5 -0.25'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+[data-theme="paper"] .grain {
+  mix-blend-mode: multiply;
+  opacity: 0.12;
+}
+html:not(.reduce) .grain {
+  animation: grain 0.9s steps(5) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -4%); }
+  60% { transform: translate(-4%, -2%); }
+  80% { transform: translate(4%, 4%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* custom cursor hides the native one only where it is active */
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+html.has-cursor input,
+html.has-cursor textarea {
+  cursor: text !important;
+}
+
+/* preloader: hidden unless the pre-paint script asks for it (no-JS never sees it), with a failsafe */
+.preloader {
+  display: none;
+}
+html:is([data-boot="run"], [data-boot="fade"]) .preloader {
+  display: flex;
+  animation: preloader-failsafe 0s linear 6s forwards;
+}
+@keyframes preloader-failsafe {
+  to {
+    visibility: hidden;
+    pointer-events: none;
   }
-  
-  .section-spacing {
-    @apply py-24 sm:py-28 lg:py-32;
+}
+
+/* WebGL is a progressive enhancement: DOM media stays visible until GL takes over */
+.gl-media {
+  transition: opacity 0.35s linear;
+}
+html.gl-ready .gl-media[data-gl-on="1"] {
+  opacity: 0;
+}
+
+/* theme toggle reveal */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: hidden;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* split text helpers */
+.split-line {
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+/* hide split targets until GSAP has split them (JS + motion only), with a failsafe */
+html.js:not(.reduce) [data-reveal]:not([data-revealed]) {
+  visibility: hidden;
+  animation: reveal-failsafe 0s linear 4s forwards;
+}
+@keyframes reveal-failsafe {
+  to {
+    visibility: visible;
   }
-  
-  .section-spacing-sm {
-    @apply py-16 sm:py-20 lg:py-24;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
   }
-  
-  .content-spacing {
-    @apply mb-16 sm:mb-20 lg:mb-24;
+}
+
+/* marquee */
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* status dot */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--live) 60%, transparent); }
+  60% { box-shadow: 0 0 0 6px transparent; }
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--live);
+}
+html:not(.reduce) .live-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+/* holographic sticker shine */
+.holo {
+  --mx: 50%;
+  --my: 50%;
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgb(255 255 255 / 0.65), transparent 38%),
+    conic-gradient(from 210deg at var(--mx) var(--my), #ffb38a, #ff4d00, #ffd36e, #c6f432, #7fd8ff, #c79bff, #ffb38a);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
   }
-  
-  .text-balance {
-    text-wrap: balance;
+}
+
+/* manifesto highlight underline (scrubbed via --mark) */
+.manifesto .is-mark {
+  position: relative;
+  --mark: 1;
+}
+.manifesto .is-mark::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.02em;
+  height: 0.075em;
+  background: var(--signal);
+  transform-origin: left center;
+  transform: scaleX(var(--mark));
+}
+
+/* selected-work reel: sticky horizontal track on desktop with motion, stacked otherwise */
+@media (min-width: 1024px) {
+  html.js:not(.reduce) .reel {
+    height: calc(var(--n) * 100svh);
   }
+  html.js:not(.reduce) .reel-sticky {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+  html.js:not(.reduce) .reel-track {
+    display: flex;
+    width: calc(var(--n) * 100vw);
+    height: 100%;
+  }
+  html.js:not(.reduce) .reel-slide {
+    width: 100vw;
+    height: 100%;
+    flex: none;
+  }
+}
+
+/* capabilities rows */
+.cap-title {
+  transition:
+    font-stretch 0.8s var(--ease-expo),
+    color 0.4s;
+}
+.cap-row:hover .cap-title,
+.cap-row:focus-within .cap-title {
+  font-stretch: 100%;
+  color: var(--signal-text);
+}
+.cap-fill {
+  transform: scaleY(0);
+  transition: transform 0.7s var(--ease-expo);
+}
+.cap-row:hover .cap-fill,
+.cap-row:focus-within .cap-fill {
+  transform: scaleY(1);
+}
+@media (min-width: 1024px) and (hover: hover) {
+  .cap-detail {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.4s,
+      transform 0.7s var(--ease-expo);
+  }
+  .cap-row:hover .cap-detail,
+  .cap-row:focus-within .cap-detail {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* work index list */
+.work-row {
+  transition: opacity 0.4s;
+}
+@media (hover: hover) {
+  .work-list:hover .work-row {
+    opacity: 0.35;
+  }
+  .work-list li[data-active] .work-row {
+    opacity: 1;
+  }
+}
+.work-title {
+  transition: color 0.3s;
+}
+.work-list li[data-active] .work-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: 100%;
+  text-transform: none;
+  letter-spacing: -0.02em;
+  color: var(--signal-text);
+}
+.work-arrow {
+  transition:
+    transform 0.6s var(--ease-expo),
+    background-color 0.3s,
+    color 0.3s;
+}
+.work-list li[data-active] .work-arrow {
+  transform: rotate(45deg);
+  background: var(--signal);
+  color: #0b0b0a;
+  border-color: transparent;
+}
+
+/* next-project zone: sticky scroll-to-advance on desktop with motion */
+@media (min-width: 1024px) and (pointer: fine) {
+  html.js:not(.reduce) .next-zone {
+    height: 175svh;
+  }
+  html.js:not(.reduce) .next-sticky {
+    position: sticky;
+    top: 0;
+    min-height: 100svh;
+  }
+}
+
+/* about: rotating postmark */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+html:not(.reduce) .postmark {
+  animation: spin-slow 28s linear infinite;
+}
+
+/* 404 glitch */
+@keyframes glitch-x {
+  0%, 100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+  20% { transform: translate(-0.02em, 0.01em); clip-path: inset(12% 0 58% 0); }
+  40% { transform: translate(0.02em, -0.01em); clip-path: inset(62% 0 8% 0); }
+  60% { transform: translate(-0.01em, 0); clip-path: inset(32% 0 40% 0); }
+  80% { transform: translate(0.015em, 0.01em); clip-path: inset(80% 0 2% 0); }
+}
+html:not(.reduce) .glitch-layer {
+  animation: glitch-x 2.4s steps(1) infinite;
+}
+
+/* once WebGL draws a plane, its DOM box must be see-through (the canvas sits behind) */
+html.gl-ready [data-gl-plane]:has(.gl-media[data-gl-on="1"]) {
+  background-color: transparent !important;
+}
+
+/* during a shared-element morph the incoming page waits until the plane lands */
+html[data-morphing] #main {
+  opacity: 0;
 }
