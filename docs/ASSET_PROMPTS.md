@@ -29,6 +29,12 @@ Suggested tools: Midjourney v7, Imagen, Flux or Firefly for stills; Veo, Sora, K
 
 ## 1. Project covers (most impact)
 
+**Status (2026-11-01):** covers 1–4 are generated and in the repo.
+- **Tool:** Figma Weave, model Nano Banana 2.1.
+- **Settings:** resolution 2K, aspect ratio 16:9, JPEG. The output is 2752×1536; the files are saved at 2000×1116.
+- **Prompts:** each prompt below was sent with the art-direction line in front and a "Strictly no text, no letters, no numbers, no logos, no UI, no people…" constraint after it, because the model has no negative-prompt field.
+- **Cover 5** is currently a real screenshot of this site. Generate it only if you prefer the art.
+
 | # | Save as | Used in | Prompt |
 |---|---|---|---|
 | 1 | `public/media/work/adaptive-learning/cover.jpg` | Work reel, `/work`, case-study hero, OG | Overhead editorial still life on an ink-black surface: dozens of small bone-white paper index cards arranged as a branching path that splits and reconverges like a learning roadmap; one continuous signal-orange (#FF4D00) thread tracing a single personalised route through them; a few cards marked with tiny pencil check marks; soft raking light, deep shadows, macro paper-fibre detail; minimal, generous negative space, subtle film grain |
@@ -39,7 +45,11 @@ Suggested tools: Midjourney v7, Imagen, Flux or Firefly for stills; Veo, Sora, K
 
 ## 2. Optional loops (AI video, for in-development projects)
 
+**Status:** not generated yet.
+
 When a `loop.mp4` exists, it plays muted in place of the still on the reel, on `/work` and in the case hero, with the cover as its poster. It's paused when the visitor prefers reduced motion.
+
+Adding a loop has a trade-off: that project loses the WebGL blueprint effect and the card→case morph, which work on stills only.
 
 | # | Save as | Prompt |
 |---|---|---|
