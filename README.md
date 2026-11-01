@@ -209,7 +209,7 @@ lib/
 
 ## Accessibility and performance
 
-- axe (WCAG 2.1 A/AA) reports no violations on any route in either theme, with one deliberate exception: while the manifesto's scroll-scrub is under way, the words you haven't reached yet are dimmed. With reduced motion they are always at full strength.
+- axe (WCAG 2.1 A/AA) reports no violations on any route in either theme. That includes the manifesto mid-scroll: words you haven't reached yet dim only to the faintest level that still passes large-text contrast (37% on ink, 45% on paper, set as `--dim` in `app/globals.css`).
 - Skip link and real links and buttons throughout. Visible focus rings, plus `aria-live` for toasts and form status.
 - The split-text helpers keep screen-reader text intact.
 - Reduced motion is respected everywhere, including an override through the pre-paint script.

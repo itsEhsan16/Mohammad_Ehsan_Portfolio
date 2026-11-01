@@ -10,7 +10,9 @@ const highlight = new Set(site.manifestoHighlights.map((w) => w.toLowerCase()));
 /**
  * Bio as a scroll-scrubbed word-by-word reveal (DOVV-style). Words are rendered
  * server-side as plain text; on the client GSAP splits them (aria:"none" keeps
- * the paragraph readable) and scrubs their opacity with scroll.
+ * the paragraph readable) and scrubs each word's --lit from 0 to 1 with scroll.
+ * CSS turns that into opacity, starting from the theme's --dim (app/globals.css):
+ * the faintest level that still passes large-text contrast.
  */
 export function Manifesto() {
   const root = useRef<HTMLElement>(null);
@@ -29,11 +31,12 @@ export function Manifesto() {
           tag: "span",
           aria: "none",
           autoSplit: true,
+          wordsClass: "manifesto-word",
           onSplit(self) {
             const tl = gsap.timeline({
               scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: 0.6 },
             });
-            tl.fromTo(self.words, { opacity: 0.14 }, { opacity: 1, stagger: 0.08, ease: "none", duration: 1 }, 0);
+            tl.fromTo(self.words, { "--lit": 0 }, { "--lit": 1, stagger: 0.08, ease: "none", duration: 1 }, 0);
             const marks = el.querySelectorAll(".is-mark");
             if (marks.length) tl.fromTo(marks, { "--mark": 0 }, { "--mark": 1, stagger: 0.08, ease: "none", duration: 0.6 }, 0.3);
             return tl;

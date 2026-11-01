@@ -455,6 +455,19 @@ html:not(.reduce) .live-dot {
   }
 }
 
+/* Manifesto words light up as you scroll (--lit, 0 to 1). Unread words dim only
+   to the faintest level that still passes large-text contrast (3:1). Dark text
+   on the light paper ground needs more than bone on ink. */
+.manifesto {
+  --dim: 0.37;
+}
+[data-theme="paper"] .manifesto {
+  --dim: 0.45;
+}
+.manifesto .manifesto-word {
+  opacity: calc(var(--dim) + (1 - var(--dim)) * var(--lit, 1));
+}
+
 /* manifesto highlight underline (scrubbed via --mark) */
 .manifesto .is-mark {
   position: relative;

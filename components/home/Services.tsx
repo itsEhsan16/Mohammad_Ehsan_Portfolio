@@ -14,7 +14,8 @@ const CARD_STYLES = [
   "bg-bone text-ink",
   "bg-orange text-ink",
   "bg-graphite text-bone border border-bone/15",
-  "bg-transparent text-fg border border-fg/40",
+  // the outlined card is filled with the page colour, so while the deck is stacked it covers the card under it
+  "bg-bg text-fg border border-fg/40",
 ];
 const TILT = [-7, 4, -3, 6];
 
