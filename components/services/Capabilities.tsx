@@ -3,12 +3,12 @@ import { SectionLabel, Chip } from "@/components/ui/SectionLabel";
 import { SplitReveal } from "@/components/ui/SplitReveal";
 import { Marquee } from "@/components/ui/Marquee";
 
-export function Capabilities() {
+export function Capabilities({ index = "02" }: { index?: string }) {
   return (
     <section id="capabilities" aria-labelledby="cap-title" className="relative py-[clamp(6rem,12vw,11rem)]">
       <div className="grid grid-cols-12 gap-6 px-gutter">
         <div className="col-span-12 lg:col-span-3">
-          <SectionLabel index="02" title="Capabilities" count={capabilities.length} />
+          <SectionLabel index={index} title="Capabilities" count={capabilities.length} />
         </div>
         <div className="col-span-12 lg:col-span-9">
           <SplitReveal as="h2" type="lines" id="cap-title" className="text-section max-w-[18ch] font-medium leading-[1.02] tracking-[-0.03em]">

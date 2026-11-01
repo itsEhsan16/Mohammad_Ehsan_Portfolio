@@ -67,6 +67,7 @@ precision highp float;
 uniform vec3 uSun;
 uniform vec3 cameraPosition;
 uniform float uFeetY;
+uniform float uContact;   // 0..1: the contact shadow only shows when a figure stands there
 in vec3 vNormal;
 in vec3 vWorld;
 layout(location = 0) out vec4 outColor;
@@ -78,14 +79,15 @@ void main() {
   // snow: bright close to the viewer, shaped by the light further out
   float shade = 0.42 + 0.58 * lam;
   shade = mix(shade, 0.97, (1.0 - smoothstep(3.0, 16.0, dist)) * 0.75);
-  // contour lines, antialiased, fading out with distance
-  float h = (vWorld.y - uFeetY) * 2.5;
+  // contour lines, antialiased, fading out with distance; offset half a step so
+  // the flat pad under the feet sits between two lines, not on one
+  float h = (vWorld.y - uFeetY) * 2.5 + 0.5;
   float w = max(fwidth(h), 1e-4);
   float contour = 1.0 - min(abs(fract(h - 0.5) - 0.5) / w, 1.0);
   contour *= 1.0 - smoothstep(10.0, 28.0, dist);
   // soft contact shadow where the figure stands
   float r = length(vWorld.xz);
-  shade *= 1.0 - 0.5 * exp(-r * r / 0.09);
+  shade *= 1.0 - 0.5 * uContact * exp(-r * r / 0.09);
   float fog = 1.0 - exp(-max(dist - 7.0, 0.0) * 0.045);
   outColor = vec4(vec3(shade), contour);
   outData = vec4(shade, 0.0, 0.5, fog);

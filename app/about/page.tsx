@@ -6,7 +6,7 @@ import { SectionLabel, Chip } from "@/components/ui/SectionLabel";
 import { Stamp } from "@/components/about/Stamp";
 import { Telemetry } from "@/components/about/Telemetry";
 import { Experience } from "@/components/about/Experience";
-import { Manifesto } from "@/components/about/Manifesto";
+import { Manifesto } from "@/components/ui/Manifesto";
 import { Icon } from "@/components/ui/Icon";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { TransitionLink } from "@/components/transition/TransitionLink";

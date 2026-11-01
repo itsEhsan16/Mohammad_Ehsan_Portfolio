@@ -3,7 +3,7 @@
  * `heroFigure()` in lib/media.ts. Client-safe: types and the dev overrides only.
  */
 export interface HeroFigure {
-  /** the GLB in /public with a content hash, or null to use the stand-in */
+  /** the GLB in /public with a content hash, or null when there's no model yet */
   src: string | null;
   /** cut-out still for phones and no-WebGL visitors (feet on the bottom edge) */
   still: { src: string; w: number; h: number } | null;
@@ -17,15 +17,14 @@ export interface HeroFigure {
 
 /**
  * Dev-only overrides (ignored in production builds):
- *   ?figure=standin             the procedural mannequin even when a GLB exists
  *   ?figure=still               export the cut-out still for phones
  *   ?figure=/media/hero/x.glb   try another GLB (e.g. one in /media/hero/_test/)
  */
-export function figureOverride(): { mode: "standin" | "still" | "src"; src?: string } | null {
+export function figureOverride(): { mode: "still" | "src"; src?: string } | null {
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") return null;
   const v = new URLSearchParams(window.location.search).get("figure");
   if (!v) return null;
-  if (v === "standin" || v === "still") return { mode: v };
+  if (v === "still") return { mode: v };
   if (/^\/media\/[\w./-]+\.glb$/.test(v)) return { mode: "src", src: v };
   return null;
 }

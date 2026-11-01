@@ -4,12 +4,12 @@ import { SplitReveal } from "@/components/ui/SplitReveal";
 
 const fmt = (d: string | null) => d ?? "Present";
 
-export function Experience() {
+export function Experience({ index = "01" }: { index?: string }) {
   return (
     <section id="experience" aria-labelledby="exp-title" className="relative px-gutter py-[clamp(6rem,12vw,11rem)]">
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-3">
-          <SectionLabel index="01" title="Experience" count={experience.length} />
+          <SectionLabel index={index} title="Experience" count={experience.length} />
         </div>
         <div className="col-span-12 lg:col-span-9">
           <SplitReveal as="h2" type="lines" id="exp-title" className="text-section max-w-[16ch] font-medium leading-[1.02] tracking-[-0.03em]">

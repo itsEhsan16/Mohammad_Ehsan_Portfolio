@@ -3,19 +3,28 @@
 import { useRef } from "react";
 import { site } from "@/content/site";
 import { gsap, SplitText, useGSAP, motionOK } from "@/lib/motion/gsap";
+import { cn } from "@/lib/utils";
 
 const highlight = new Set(site.manifestoHighlights.map((w) => w.toLowerCase()));
 
 /**
- * The bio as a scroll-scrubbed word-by-word reveal (DOVV-style), leading /about.
- * Words are rendered server-side as plain text; on the client GSAP splits them
- * (aria:"none" keeps the paragraph readable) and scrubs each word's --lit from 0
- * to 1. CSS turns that into opacity, starting from the theme's --dim
- * (app/globals.css): the faintest level that still passes large-text contrast.
- * The paragraph sits near the top of the page, so the scrub starts early enough
- * that the first lines are already lit on load.
+ * The bio as a scroll-scrubbed word-by-word reveal (DOVV-style), on the home
+ * intro and leading /about. Words are rendered server-side as plain text; on
+ * the client GSAP splits them (aria:"none" keeps the paragraph readable) and
+ * scrubs each word's --lit from 0 to 1 between `start` and `end`. CSS turns that
+ * into opacity, starting from the theme's --dim (app/globals.css): the faintest
+ * level that still passes large-text contrast. The defaults suit /about, where
+ * the paragraph sits near the top, so the first lines are lit on load.
  */
-export function Manifesto() {
+export function Manifesto({
+  className = "text-[clamp(1.6rem,3vw,3rem)] leading-[1.1]",
+  start = "top 95%",
+  end = "bottom 40%",
+}: {
+  className?: string;
+  start?: string;
+  end?: string;
+}) {
   const para = useRef<HTMLParagraphElement>(null);
 
   useGSAP(
@@ -34,7 +43,7 @@ export function Manifesto() {
           wordsClass: "manifesto-word",
           onSplit(self) {
             const tl = gsap.timeline({
-              scrollTrigger: { trigger: el, start: "top 95%", end: "bottom 40%", scrub: 0.6 },
+              scrollTrigger: { trigger: el, start, end, scrub: 0.6 },
             });
             tl.fromTo(self.words, { "--lit": 0 }, { "--lit": 1, stagger: 0.08, ease: "none", duration: 1 }, 0);
             const marks = el.querySelectorAll(".is-mark");
@@ -52,7 +61,7 @@ export function Manifesto() {
   );
 
   return (
-    <p ref={para} className="manifesto text-[clamp(1.6rem,3vw,3rem)] font-medium leading-[1.1] tracking-[-0.025em] text-fg">
+    <p ref={para} className={cn("manifesto font-medium tracking-[-0.025em] text-fg", className)}>
       {site.manifesto.split(/(\s+)/).map((tok, i) =>
         highlight.has(tok.toLowerCase()) ? (
           <span key={i} className="is-mark">

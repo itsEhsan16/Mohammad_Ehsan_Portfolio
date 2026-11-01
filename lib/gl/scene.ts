@@ -8,7 +8,6 @@ import type { SceneSpec } from "./registry";
 import { STAGE, baseDistance, cameraPose, feetHeight, feetShift, heightAt } from "./terrain";
 import { compositeFrag, figureFrag, sceneVert, terrainFrag } from "./scene-shaders";
 import { planeVert } from "./shaders";
-import { buildMannequin } from "./mannequin";
 import { figureOverride } from "./figure";
 import type { LoadedFigure } from "./figure-glb";
 
@@ -26,7 +25,7 @@ export interface SceneEngine {
   freeTarget(rt: RenderTarget): void;
 }
 
-/** The figure in the scene: the stand-in or a loaded GLB. */
+/** The figure in the scene: your loaded GLB. */
 interface Figure {
   root: Transform;
   triangles: number;
@@ -38,8 +37,6 @@ interface Figure {
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const ease = (dt: number, tau: number) => 1 - Math.exp(-dt / tau);
-const WOOD: [number, number, number, number] = [0.8, 0.67, 0.52, 1];
-const JOINT: [number, number, number, number] = [0.58, 0.46, 0.34, 1];
 /** At most this many pixels in the offscreen pass (it sets the dither's source detail). */
 const MAX_PIXELS = 1.3e6;
 
@@ -99,7 +96,7 @@ function quadGeometry(gl: GL) {
   });
 }
 
-/** Shader program for figure meshes (stand-in or GLB). */
+/** Shader program for the figure's meshes. */
 export function figureProgram(
   gl: GL,
   opts: { skinned?: boolean; uv?: boolean; alphaMask?: boolean; base?: [number, number, number, number]; map?: Texture | null; cutoff?: number },
@@ -118,9 +115,9 @@ export function figureProgram(
 }
 
 /**
- * The home stage in 3D: you (or the stand-in) on a ridge, rendered offscreen
- * and composited as dither. Ground is drawn before the painted name, the
- * figure after it.
+ * The home hero in 3D: a dithered ridge behind your name, with your model
+ * standing on it once one exists. Rendered offscreen and composited as dither:
+ * the ground before the painted name, the figure after it.
  */
 export class HeroScene {
   readonly spec: SceneSpec;
@@ -174,6 +171,7 @@ export class HeroScene {
         uniforms: {
           uSun: { value: normalize([-0.55, 0.42, -0.72]) },
           uFeetY: { value: feetHeight() },
+          uContact: { value: 0 },
         },
       }),
     });
@@ -223,21 +221,6 @@ export class HeroScene {
   }
 
   /* ── figure ── */
-
-  private standIn(): Figure {
-    const gl = this.gl;
-    const wood = figureProgram(gl, { base: WOOD });
-    const joint = figureProgram(gl, { base: JOINT });
-    const m = buildMannequin(gl, wood, joint);
-    return {
-      root: m.root,
-      triangles: m.triangles,
-      label: "Stand-in",
-      clip: "Idle · procedural",
-      update: (t, _dt, look) => m.pose(t, look),
-      dispose: () => {},
-    };
-  }
 
   private place(f: Figure) {
     this.figure?.root.setParent(null);
@@ -323,13 +306,11 @@ export class HeroScene {
     );
   }
 
+  /** Your model, when one exists; until then the scene is the ground alone. */
   private loadFigure() {
     const o = figureOverride();
-    const src = o?.mode === "standin" ? null : o?.mode === "src" ? o.src! : this.spec.figure.src;
-    if (!src) {
-      this.place(this.standIn());
-      return;
-    }
+    const src = o?.mode === "src" ? o.src! : this.spec.figure.src;
+    if (!src) return;
     const { yaw, height, clip } = this.spec.figure;
     import("./figure-glb")
       .then((m) => m.loadFigure(this.gl, src, { yaw, height, clip, program: figureProgram }))
@@ -337,10 +318,7 @@ export class HeroScene {
         if (this.destroyed) return f.dispose();
         this.place({ ...f, label: src.split("?")[0].split("/").pop() || "me.glb" });
       })
-      .catch((e) => {
-        console.warn("Hero figure failed to load; showing the stand-in", e);
-        if (!this.destroyed) this.place(this.standIn());
-      });
+      .catch((e) => console.warn("The hero model failed to load; showing the ground alone", e));
   }
 
   /* ── input ── */
@@ -466,6 +444,7 @@ export class HeroScene {
     cam.projectionMatrix[9] = -feetShift(pose);
 
     this.figure?.update(t, dt, this.hover.x);
+    this.terrain.program.uniforms.uContact.value = this.figure ? this.figureFade.v : 0;
 
     const rt = this.ensureTarget();
     const renderer = this.engine.renderer;

@@ -92,7 +92,7 @@ const HERO_DIR = "/media/hero";
 
 /**
  * The home scene's figure, checked at build time:
- *   - `me.glb`: your model. Without it the scene shows the stand-in mannequin.
+ *   - `me.glb`: your model. Without it the hero shows the ridge alone.
  *   - `me.json` (optional): `{ "yaw": 0, "height": 1.8, "clip": "idle" }`.
  *   - `figure.webp` (optional): the cut-out still for phones, exported with `/?figure=still` in dev.
  * The GLB URL carries a content hash, so a new model is never served from cache.

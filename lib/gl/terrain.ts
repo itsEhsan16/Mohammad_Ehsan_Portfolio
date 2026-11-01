@@ -80,10 +80,10 @@ function rawHeight(x: number, z: number) {
   const roll = 0.32 * fbm(x * 0.16 + 11, z * 0.16 - 4, 4);
   // a ring of hills around the stage (so orbiting never runs out of horizon);
   // ridged noise gives sharp peaks and saddles
-  const back = Math.max(0, Math.hypot(x, z) - 12);
+  const back = Math.max(0, Math.hypot(x, z) - 18);
   const ridged = 1 - Math.abs(fbm(x * 0.075 + 7, z * 0.05 - 2, 4));
   const peaks = Math.pow(ridged, 2.6) * (0.5 + 1.0 * (0.5 + 0.5 * fbm(x * 0.015 - 3, 1.7, 2)));
-  const range = (1 - Math.exp(-back / 16)) * (0.4 + 9.5 * peaks);
+  const range = (1 - Math.exp(-back / 16)) * (0.4 + 7 * peaks);
   // fine drift detail
   const fine = 0.05 * fbm(x * 1.6, z * 1.6, 3);
   return crest + roll + range + fine;
@@ -177,7 +177,7 @@ export function stageSkyline(columns = 96, aspect = STAGE.aspect) {
     let top = 1;
     for (let s = 0; s < 160; s++) {
       const depth = 0.4 * Math.pow(1.045, s); // 0.4 m … about 450 m
-      if (depth > 120) break;
+      if (depth > 160) break; // the mesh reaches 150 m
       const side = xn * t * aspect * depth;
       const x = pose.eye[0] + fh[0] * depth + rh[0] * side;
       const z = pose.eye[2] + fh[2] * depth + rh[2] * side;
