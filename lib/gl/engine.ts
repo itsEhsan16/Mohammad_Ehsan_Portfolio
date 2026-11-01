@@ -4,8 +4,17 @@ import { Geometry, Mesh, Program, RenderTarget, Renderer, Texture, Triangle, typ
 import { gsap } from "@/lib/motion/gsap";
 import { scrollVelocity } from "@/lib/motion/lenis";
 import { whenVisible } from "@/lib/transition";
-import { getInkHost, getPlanes, onInkHost, onPlanes, type PlaneSpec } from "./registry";
-import { inkFrag, planeFrag, planeVert, simFrag, simVert } from "./shaders";
+import {
+  getFieldBackdrop,
+  getInkHost,
+  getPlanes,
+  onFieldBackdrop,
+  onInkHost,
+  onPlanes,
+  type FieldBackdropState,
+  type PlaneSpec,
+} from "./registry";
+import { backdropFieldFrag, backdropFrag, inkFrag, planeFrag, planeVert, simFrag, simVert } from "./shaders";
 import { posterCanvas, textMaskCanvas } from "./poster";
 
 /** OGL context; the engine only runs on WebGL2, so WebGL2 constants are safe. */
@@ -451,6 +460,177 @@ class InkField {
   }
 }
 
+/* ───────────────────────── /work field backdrop ───────────────────────── */
+
+class Backdrop {
+  /** css px per dither cell */
+  static CELL = 3;
+  mesh: Mesh;
+  program: Program;
+  fieldMesh: Mesh;
+  fieldProgram: Program;
+  sim: Mesh;
+  simProgram: Program;
+  rtA!: RenderTarget;
+  rtB!: RenderTarget;
+  rtField!: RenderTarget;
+  private size: [number, number] = [1, 1];
+  private fade = { a: 0 };
+  private dim = 0;
+  private p0 = { x: -1, y: -1 };
+  private p1 = { x: -1, y: -1 };
+  private force = 0;
+  private off: (() => void)[] = [];
+
+  constructor(
+    private engine: Engine,
+    public state: FieldBackdropState,
+  ) {
+    const gl = engine.gl;
+    const flat = { depthTest: false, depthWrite: false, cullFace: false } as const;
+    this.simProgram = new Program(gl, {
+      vertex: simVert,
+      fragment: simFrag,
+      ...flat,
+      uniforms: {
+        tPrev: { value: null },
+        uTexel: { value: [1, 1] },
+        uP0: { value: [-1, -1] },
+        uP1: { value: [-1, -1] },
+        uForce: { value: 0 },
+        uRadius: { value: 0.062 },
+        uDecay: { value: 0.955 },
+        uAspect: { value: 1 },
+        uAdvect: { value: 0 },
+      },
+    });
+    this.sim = new Mesh(gl, { geometry: new Triangle(gl), program: this.simProgram });
+    this.fieldProgram = new Program(gl, {
+      vertex: simVert,
+      fragment: backdropFieldFrag,
+      ...flat,
+      uniforms: {
+        tTrail: { value: null },
+        uView: { value: [1, 1] },
+        uSize: { value: [1, 1] },
+        uCell: { value: Backdrop.CELL },
+        uPan: { value: [0, 0] },
+        uTime: { value: 0 },
+        uMove: { value: 0 },
+        uDim: { value: 0 },
+      },
+    });
+    this.fieldMesh = new Mesh(gl, { geometry: new Triangle(gl), program: this.fieldProgram });
+    this.program = new Program(gl, {
+      vertex: simVert,
+      fragment: backdropFrag,
+      transparent: true,
+      ...flat,
+      uniforms: {
+        tField: { value: null },
+        uSize: { value: [1, 1] },
+        uCell: { value: Backdrop.CELL },
+        uRes: { value: [1, 1] },
+        uDpr: { value: 1 },
+        uAlpha: { value: 0 },
+        uBg: { value: engine.colors.bg },
+        uFg: { value: engine.colors.fg },
+      },
+    });
+    this.mesh = new Mesh(gl, { geometry: new Triangle(gl), program: this.program });
+    this.resize();
+
+    const onMove = (e: PointerEvent) => {
+      const x = e.clientX / Math.max(1, engine.width);
+      const y = 1 - e.clientY / Math.max(1, engine.height);
+      if (this.p1.x < -0.5) this.p1 = { x, y };
+      const speed = Math.hypot((x - this.p1.x) * engine.width, (y - this.p1.y) * engine.height);
+      this.p0 = { ...this.p1 };
+      this.p1 = { x, y };
+      this.force = Math.min(0.9, 0.16 + speed * 0.02);
+    };
+    const onLeave = () => (this.p1 = { x: -1, y: -1 });
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    this.off.push(() => {
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+    });
+    gsap.to(this.fade, { a: 1, duration: 1.2, ease: "power2.out" });
+  }
+
+  /** The trail runs at a third of the screen; the density field at one texel per dither cell. */
+  resize() {
+    const gl = this.engine.gl;
+    const W = Math.max(1, this.engine.width);
+    const H = Math.max(1, this.engine.height);
+    if (this.rtA) [this.rtA, this.rtB, this.rtField].forEach((rt) => this.engine.freeTarget(rt));
+    const w = Math.max(64, Math.round(Math.min(480, W / 3)));
+    const h = Math.max(32, Math.round((w * H) / W));
+    this.rtA = this.engine.makeTarget(w, h);
+    this.rtB = this.engine.makeTarget(w, h);
+    this.simProgram.uniforms.uTexel.value = [1 / w, 1 / h];
+    this.simProgram.uniforms.uAspect.value = w / h;
+    this.size = [Math.ceil(W / Backdrop.CELL), Math.ceil(H / Backdrop.CELL)];
+    this.rtField = new RenderTarget(gl, {
+      width: this.size[0],
+      height: this.size[1],
+      minFilter: gl.NEAREST,
+      magFilter: gl.NEAREST,
+      depth: false,
+    });
+  }
+
+  draw(renderer: Renderer, t: number, dt: number) {
+    const gl = this.engine.gl;
+    const s = this.state;
+
+    // 1. cursor trail
+    const su = this.simProgram.uniforms;
+    su.tPrev.value = this.rtA.texture;
+    su.uP0.value = [this.p0.x, this.p0.y];
+    su.uP1.value = [this.p1.x, this.p1.y];
+    su.uForce.value = this.p1.x < -0.5 ? 0 : this.force;
+    su.uDecay.value = Math.pow(0.955, dt * 60);
+    renderer.render({ scene: this.sim, target: this.rtB, clear: false, frustumCull: false, sort: false });
+    [this.rtA, this.rtB] = [this.rtB, this.rtA];
+    this.p0 = { ...this.p1 };
+    this.force *= 0.5;
+
+    // 2. density, one texel per cell
+    this.dim += (s.dim - this.dim) * (1 - Math.pow(0.9, dt * 60));
+    const fu = this.fieldProgram.uniforms;
+    fu.tTrail.value = this.rtA.texture;
+    fu.uView.value = [this.engine.width, this.engine.height];
+    fu.uSize.value = this.size;
+    fu.uPan.value = [s.panX, s.panY];
+    fu.uTime.value = t;
+    fu.uMove.value = s.moving;
+    fu.uDim.value = this.dim;
+    renderer.render({ scene: this.fieldMesh, target: this.rtField, clear: false, frustumCull: false, sort: false });
+
+    // 3. dither to the screen
+    const u = this.program.uniforms;
+    u.tField.value = this.rtField.texture;
+    u.uSize.value = this.size;
+    u.uRes.value = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    u.uDpr.value = this.engine.dpr;
+    u.uAlpha.value = this.fade.a;
+    renderer.render({ scene: this.mesh, clear: false, frustumCull: false, sort: false });
+  }
+
+  setColors(c: Engine["colors"]) {
+    this.program.uniforms.uBg.value = c.bg;
+    this.program.uniforms.uFg.value = c.fg;
+  }
+
+  destroy() {
+    this.off.forEach((f) => f());
+    gsap.killTweensOf(this.fade);
+    [this.rtA, this.rtB, this.rtField].forEach((rt) => this.engine.freeTarget(rt));
+  }
+}
+
 /* ───────────────────────── engine ───────────────────────── */
 
 export class Engine {
@@ -461,6 +641,7 @@ export class Engine {
   destroyed = false;
   private planes = new Map<PlaneSpec, Plane>();
   private ink: InkField | null = null;
+  private backdrop: Backdrop | null = null;
   private geo: Geometry;
   private uploads: (() => void)[] = [];
   /** Uploaded textures by source key — reused across routes and by morph targets. */
@@ -496,8 +677,10 @@ export class Engine {
     this.off.push(
       onPlanes((type, spec) => (type === "add" ? this.add(spec) : this.remove(spec))),
       onInkHost((el) => this.setInk(el)),
+      onFieldBackdrop((st) => this.setBackdrop(st)),
     );
     this.setInk(getInkHost());
+    this.setBackdrop(getFieldBackdrop());
 
     const onResize = () => {
       this.W = window.innerWidth;
@@ -505,12 +688,14 @@ export class Engine {
       this.dpr = capDpr(this.W, this.H);
       this.renderer.dpr = this.dpr;
       this.renderer.setSize(this.W, this.H);
+      this.backdrop?.resize();
       this.remeasure();
     };
     const onTheme = () => {
       this.colors = readColors();
       this.planes.forEach((p) => p.setColors(this.colors));
       this.ink?.setColors(this.colors);
+      this.backdrop?.setColors(this.colors);
       this.floater?.setColors(this.colors);
     };
     const onLost = (e: Event) => {
@@ -560,6 +745,20 @@ export class Engine {
     return new RenderTarget(gl, { width, height, minFilter: gl.LINEAR, magFilter: gl.LINEAR, depth: false });
   }
 
+  get width() {
+    return this.W;
+  }
+
+  get height() {
+    return this.H;
+  }
+
+  freeTarget(rt: RenderTarget) {
+    const gl = this.gl;
+    gl.deleteFramebuffer(rt.buffer);
+    gl.deleteTexture(rt.texture.texture);
+  }
+
   queueUpload(fn: () => void) {
     this.uploads.push(fn);
   }
@@ -576,6 +775,12 @@ export class Engine {
     this.planes.delete(spec);
   }
 
+  private setBackdrop(state: FieldBackdropState | null) {
+    if (this.backdrop && this.backdrop.state === state) return;
+    this.backdrop?.destroy();
+    this.backdrop = state ? new Backdrop(this, state) : null;
+  }
+
   private setInk(el: HTMLElement | null) {
     if (this.ink && this.ink.host === el) return;
     this.ink?.destroy();
@@ -589,7 +794,7 @@ export class Engine {
   /* ── shared-element morph ── */
   morphCapture(from: HTMLElement): boolean {
     const plane = Array.from(this.planes.values()).find((p) => p.ready && (from === p.spec.el || from.contains(p.spec.el)));
-    if (!plane) return false;
+    if (!plane) return this.captureImage(from);
     const r = plane.spec.el.getBoundingClientRect();
     const floater = new Plane(this, { ...plane.spec, sync: "cached" }, this.geo, plane.texture);
     floater.program.uniforms.uImage.value = plane.program.uniforms.uImage.value;
@@ -598,6 +803,31 @@ export class Engine {
     this.floater?.destroy();
     this.floater = floater;
     plane.hidden = true;
+    return true;
+  }
+
+  /**
+   * Morph from a plain <img> that isn't a registered plane (the /work field's
+   * open picture): upload it on the spot and float it from where it sits.
+   * Prefers the sharp copy once it has loaded.
+   */
+  private captureImage(from: HTMLElement): boolean {
+    const imgs = Array.from(from.querySelectorAll<HTMLImageElement>("img[data-morph-image]")).filter(
+      (i) => i.complete && i.naturalWidth > 0 && (i.dataset.morphImage !== "hi" || i.classList.contains("is-loaded")),
+    );
+    const img = imgs.find((i) => i.dataset.morphImage === "hi") ?? imgs[0];
+    if (!img) return false;
+    const r = img.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    const gl = this.gl;
+    const texture = new Texture(gl, { image: img, generateMipmaps: false, minFilter: gl.LINEAR, magFilter: gl.LINEAR });
+    const spec: PlaneSpec = { el: img, src: img.currentSrc || img.src, title: img.alt, variant: "blueprint", sync: "cached" };
+    const floater = new Plane(this, spec, this.geo, texture);
+    floater.program.uniforms.uImage.value = [img.naturalWidth, img.naturalHeight];
+    floater.state.progress = 1;
+    floater.override = { left: r.left, top: r.top, width: r.width, height: r.height };
+    this.floater?.destroy();
+    this.floater = floater;
     return true;
   }
 
@@ -683,6 +913,7 @@ export class Engine {
     gl.clearColor(r, g, b, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    this.backdrop?.draw(this.renderer, t, dt);
     this.planes.forEach((p) => p.draw(this.renderer, y, this.W, this.H, t, dt, velocity));
     this.ink?.draw(this.renderer, this.W, this.H, t, dt);
     this.floater?.draw(this.renderer, y, this.W, this.H, t, dt, 0);
@@ -695,6 +926,7 @@ export class Engine {
     this.planes.forEach((p) => p.destroy());
     this.planes.clear();
     this.ink?.destroy();
+    this.backdrop?.destroy();
     this.floater?.destroy();
     document.documentElement.classList.remove("gl-ready");
     if (loseContext) this.gl.getExtension("WEBGL_lose_context")?.loseContext();

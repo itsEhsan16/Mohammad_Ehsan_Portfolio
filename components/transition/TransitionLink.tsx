@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, type ComponentProps, type Ref } from "react";
+import { useRef, type ComponentProps, type Ref, type RefObject } from "react";
 import { scrollToHash, transitionTo } from "@/lib/transition";
 import { click } from "@/lib/audio";
 
@@ -10,6 +10,8 @@ type Props = Omit<ComponentProps<typeof Link>, "href"> & {
   href: string;
   /** Morph the WebGL plane inside this link into the next page (shared-element transition). */
   morph?: boolean;
+  /** Morph from this element instead of the link itself (e.g. a picture shown next to the link). */
+  morphRef?: RefObject<HTMLElement | null>;
   ref?: Ref<HTMLAnchorElement>;
 };
 
@@ -17,7 +19,7 @@ type Props = Omit<ComponentProps<typeof Link>, "href"> & {
  * next/link with page transitions. Uses `onNavigate`, which only fires for real
  * client-side navigations — modifier-clicks and new tabs behave natively.
  */
-export function TransitionLink({ href, morph, onNavigate, onClick, ref, ...rest }: Props) {
+export function TransitionLink({ href, morph, morphRef, onNavigate, onClick, ref, ...rest }: Props) {
   const router = useRouter();
   const clicked = useRef<HTMLAnchorElement | null>(null);
 
@@ -46,7 +48,7 @@ export function TransitionLink({ href, morph, onNavigate, onClick, ref, ...rest 
           return;
         }
         e.preventDefault();
-        void transitionTo(router, href, { morphFrom: morph ? clicked.current : null });
+        void transitionTo(router, href, { morphFrom: morph ? (morphRef?.current ?? clicked.current) : null });
       }}
       {...rest}
     />

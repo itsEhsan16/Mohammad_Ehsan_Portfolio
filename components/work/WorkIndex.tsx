@@ -9,6 +9,7 @@ import { Chip } from "@/components/ui/SectionLabel";
 import { Icon } from "@/components/ui/Icon";
 import { gsap, finePointer, motionOK } from "@/lib/motion/gsap";
 import { tick } from "@/lib/audio";
+import { setWorkView } from "@/lib/field/view";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "shipped" | "in-development";
@@ -99,6 +100,16 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
           ))}
         </div>
         <div role="group" aria-label="Layout" className="flex gap-1.5">
+          <button
+            type="button"
+            aria-pressed={false}
+            onClick={() => setWorkView("field")}
+            onMouseEnter={tick}
+            className="t-label hidden items-center gap-2 rounded-full border border-line px-3.5 py-2 text-[11px] text-fg/80 transition-colors hover:border-fg/50 [html.js_&]:inline-flex"
+          >
+            <span aria-hidden="true" className="h-[6px] w-[6px] bg-signal" />
+            field
+          </button>
           {(["list", "grid"] as View[]).map((v) => (
             <button
               key={v}

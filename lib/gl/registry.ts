@@ -64,6 +64,35 @@ export function onInkHost(l: (el: HTMLElement | null) => void) {
   };
 }
 
+/**
+ * The /work field's camera, shared with the engine's dithered backdrop (one at a
+ * time). The field mutates this object every frame; the engine only reads it.
+ */
+export interface FieldBackdropState {
+  /** Camera position in CSS px. */
+  panX: number;
+  panY: number;
+  /** 0 at rest → 1 while the field is being thrown. */
+  moving: number;
+  /** 0 normal → 1 while a card is held or a picture is open. */
+  dim: number;
+}
+let fieldBackdrop: FieldBackdropState | null = null;
+const fieldListeners = new Set<(s: FieldBackdropState | null) => void>();
+export function setFieldBackdrop(s: FieldBackdropState | null) {
+  fieldBackdrop = s;
+  fieldListeners.forEach((l) => l(s));
+}
+export function getFieldBackdrop() {
+  return fieldBackdrop;
+}
+export function onFieldBackdrop(l: (s: FieldBackdropState | null) => void) {
+  fieldListeners.add(l);
+  return () => {
+    fieldListeners.delete(l);
+  };
+}
+
 /** Running engine (or null). Typed loosely so this module never imports the engine bundle. */
 export interface EngineHandle {
   morphCapture(from: HTMLElement): boolean;

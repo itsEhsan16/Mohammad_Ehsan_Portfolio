@@ -15,6 +15,8 @@ export interface AppState {
   transitioning: boolean;
   /** WebGL engine is running. */
   gl: boolean;
+  /** The /work field fills the screen (no footer, no page scroll). */
+  field: boolean;
 }
 
 const initial: AppState = {
@@ -25,6 +27,7 @@ const initial: AppState = {
   theme: "ink",
   transitioning: false,
   gl: false,
+  field: false,
 };
 
 let state: AppState = initial;

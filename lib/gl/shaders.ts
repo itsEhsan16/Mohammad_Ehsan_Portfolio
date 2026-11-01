@@ -211,3 +211,87 @@ void main() {
   a *= step(b, uReveal * 1.001 - 0.0001 + step(0.999, uReveal));
   outColor = vec4(col, a);
 }`;
+
+/**
+ * /work field backdrop, pass 1 — one texel per dither cell: density from a base
+ * level, a tilt and drifting noise that travels with the field (30% parallax),
+ * stepped back while a card is held, and torn open where the cursor has just
+ * been (the trail sim, roughened by noise). R = density, G = torn-edge rim.
+ */
+export const backdropFieldFrag = /* glsl */ `#version 300 es
+precision highp float;
+${common}
+uniform sampler2D tTrail;
+uniform vec2 uView;     // viewport, css px
+uniform vec2 uSize;     // this target, in cells
+uniform float uCell;    // css px per cell
+uniform vec2 uPan;      // camera, css px
+uniform float uTime;
+uniform float uMove;
+uniform float uDim;
+in vec2 vUv;
+out vec4 outColor;
+
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += a * vnoise(p);
+    p = p * 2.03 + 17.17;
+    a *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  vec2 q = floor(vec2(vUv.x, 1.0 - vUv.y) * uSize);   // cell index, top-left origin
+  vec2 c = (q + 0.5) * uCell;
+  vec2 uv = c / uView;
+  float t = uTime;
+
+  float d = 0.34 + (uv.y - 0.5) * 0.3;
+  d += (fbm((c + uPan * 0.3) * 0.0021 + vec2(t * 0.017, -t * 0.011)) - 0.5) * 1.05;
+  d += uMove * 0.1;
+
+  float tr = texture(tTrail, vec2(uv.x, 1.0 - uv.y)).r;
+  float f = tr + (fbm(c * 0.03 + vec2(t * 0.4, -t * 0.27)) - 0.5) * 0.6;
+  float hole = smoothstep(0.26, 0.32, f);
+  float rim = smoothstep(0.1, 0.18, f) * (1.0 - hole);
+  d = clamp(d, 0.0, 1.0) * (1.0 - hole) * (1.0 - uDim * 0.6);
+  outColor = vec4(d, rim, 0.0, 1.0);
+}`;
+
+/** /work field backdrop, pass 2 — full resolution: ordered dither of the cell density into small square dots. */
+export const backdropFrag = /* glsl */ `#version 300 es
+precision highp float;
+${common}
+uniform sampler2D tField;
+uniform vec2 uSize;
+uniform float uCell;
+uniform vec2 uRes;      // drawing buffer px
+uniform float uDpr;
+uniform float uAlpha;
+uniform vec3 uBg;
+uniform vec3 uFg;
+in vec2 vUv;
+out vec4 outColor;
+void main() {
+  vec2 css = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;
+  vec2 q = floor(css / uCell);
+  vec4 f = texture(tField, vec2(q.x + 0.5, uSize.y - q.y - 0.5) / uSize);
+  float on = step(bayer8(q), f.r);
+  vec2 inCell = abs(css - (q + 0.5) * uCell);
+  on *= step(max(inCell.x, inCell.y), uCell * 0.36);
+  vec3 ink = mix(uBg, uFg, 0.085 + f.g * 0.2);
+  outColor = vec4(mix(uBg, ink, on), uAlpha);
+}`;

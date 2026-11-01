@@ -8,13 +8,15 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 - **Hero:** paint the giant halftone name with your cursor to "render" it in signal orange.
 - **Project images:** they start as edge-detected blueprints and develop into colour as they scroll into view.
 - **Page navigation:** pages "compile" through an ordered-dither wipe, or morph from a project card into its case study.
+- **`/work`:** an endless field of every project's tiles. You drag, scroll or arrow through it; the middle of the screen renders in colour while the edges stay blueprint.
 
 ## Highlights
 
 **WebGL** (OGL, about 43 KB, loaded after first paint and only on desktop pointers):
 - An ink-field hero driven by a ping-pong trail simulation, with click ripples and an idle autopilot.
 - Blueprint→render image planes synced to the DOM.
-- A shared-element morph into each case study.
+- A shared-element morph into each case study, from a project card or from the work field's open picture.
+- The work field's backdrop: noise density computed once per dither cell, then ordered-dithered to the screen, with the cursor trail tearing holes in it.
 
 **Motion** (GSAP + Lenis on a single ticker):
 - Split-text reveals and a scroll-scrubbed manifesto.
@@ -29,8 +31,16 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 - Optional synthesized UI sounds (Web Audio, off by default).
 - Draggable holographic stickers.
 
+**The work field** (`/work`):
+- A wrap-around grid of project tiles: key visuals, screenshots and type-only spec sheets. Drag, scroll/trackpad, arrow keys or touch move it; it never runs out.
+- While it moves, cards shrink, flatten along the direction of travel, round their corners and split into RGB. At rest they lean toward the pointer.
+- Colour belongs to the middle of the screen: cards toward the edges cross-fade to a grey, dot-screened blueprint.
+- Rest on a card and everything else steps back. Click it and the picture flies to the middle, with a link that morphs into the case study.
+- CRT glass over the field (grade, scan lines, vignette, a slow refresh band), a dithered WebGL backdrop that pans with the field and tears open under the cursor, and a HUD with live coordinates.
+- An **Index view** toggle switches to the list/grid index; the choice is remembered. Reduced motion, crawlers and no-JS visitors get the index, and the camera position is kept for the session.
+
 **Pages:**
-- Home, `/work` (filters, list/grid, hover preview) and 5 static case studies with scroll-to-advance.
+- Home, `/work` (the field, plus an index with filters, list/grid and hover preview) and 5 static case studies with scroll-to-advance.
 - `/about` (stamp portrait and live telemetry card) and a custom 404.
 
 **Built to degrade gracefully:**
@@ -80,6 +90,7 @@ pnpm dev                     # http://localhost:3000
 | `?gl=0` | Disable WebGL |
 | `?boot=1` | Force the boot preloader |
 | `?boot=0` | Skip the boot preloader |
+| `?view=field` / `?view=index` | Force a `/work` view for this visit |
 
 ## Editing content
 
@@ -132,13 +143,14 @@ content/      all copy and data (typed)
 components/
   chrome/     HUD, header, mobile menu, cursor, footer + SAY HELLO, stickers, preloader, ⌘K palette
   home/       hero, manifesto, work reel, capabilities, services, experience, contact
-  work/       work index, project media, case blocks, next project
+  work/       work field, work index, project media, case blocks, next project
   about/      stamp portrait, telemetry card
   transition/ transition link, route watcher, wipe/morph layer
   gl/         the WebGL canvas
 lib/
   gl/         OGL engine, shaders, procedural posters/text masks, DOM↔GL registry
   motion/     GSAP registration + eases, Lenis handle
+  field/      the /work field: geometry, physics controller, lightbox, tile list (built from content at build time)
   transition.ts  wipe.ts  store.ts  theme.ts  audio.ts  time.ts  media.ts (build-time asset checks)  seo.ts
 ```
 
