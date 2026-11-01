@@ -5,24 +5,24 @@ Personal portfolio of **Mohammad Ehsan**, software engineer and front-end develo
 Live: <https://mohammadehsan.vercel.app>
 
 The site behaves like a renderer. Everything starts as a blueprint (halftone dots, wireframes, mono annotations) and resolves into final pixels as you interact with it:
-- **Home:** one stage. A 3D figure stands on a dithered ridge in front of the giant halftone name; your cursor paints the name signal orange and "renders" the figure in full colour. Drag to look around.
+- **Hero:** paint the giant halftone name with your cursor to "render" it in signal orange. A dithered 3D ridge sits behind it, and your own 3D model can stand on it.
 - **Project images:** they start as edge-detected blueprints and develop into colour as they scroll into view.
 - **Page navigation:** pages "compile" through an ordered-dither wipe, or morph from a project card into its case study.
 - **`/work`:** three views behind a LIST · WHEEL · GRID switcher, all of them endless. LIST and WHEEL are a looping strip of big titles with a preview card; GRID is a drag-through field where the middle of the screen renders in colour while the edges stay blueprint.
 
 ## Highlights
 
-**WebGL** (OGL, loaded after first paint and only on desktop pointers: the engine is about 13 KB gzipped; the home scene adds about 10 KB, and the model loader about 8 KB once you add a model):
-- The home scene: terrain and figure render offscreen (two outputs plus depth), then are composited as ordered dither. The ground is drawn before the painted name and the figure after it, so the name sits between them.
-- The figure is a procedural wooden mannequin until you add your own GLB (rigged and animated models work); see [The home scene and your 3D model](#the-home-scene-and-your-3d-model).
-- An ink-field name driven by a ping-pong trail simulation that spans the whole stage, with click ripples and an idle autopilot.
+**WebGL** (OGL, loaded after first paint and only on desktop pointers: the engine is about 13 KB gzipped; the hero's 3D scene adds about 9 KB on the home page, and the model loader about 8 KB once you add a model):
+- The hero's ridge: the terrain (and your model, once added) renders offscreen with two outputs plus depth, then is composited as ordered dither. The ground is drawn before the painted name and the figure after it, so the name sits between them.
+- Your own GLB stands on the ridge once you add it; rigged and animated models work. See [The hero's ridge and your 3D model](#the-heros-ridge-and-your-3d-model).
+- An ink-field name driven by a ping-pong trail simulation that spans the whole hero, with click ripples and an idle autopilot.
 - Blueprint→render image planes synced to the DOM.
 - A shared-element morph into each case study, from a project card or from the work field's open picture.
 - The work field's backdrop: noise density computed once per dither cell, then ordered-dithered to the screen, with the cursor trail tearing holes in it.
 
 **Motion** (GSAP + Lenis on a single ticker):
-- Split-text reveals and a scroll-scrubbed manifesto on /about.
-- Tilted service cards that fan out on /services.
+- Split-text reveals and a scroll-scrubbed manifesto (on the home intro and /about).
+- A sticky horizontal work reel on the home page, and tilted service cards that fan out on /services.
 - Variable-font letters that react to the cursor.
 - Scramble titles and magnetic buttons.
 
@@ -50,7 +50,7 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 - Reduced motion and crawlers start on LIST; no-JS visitors get a plain list of links (it stays in the page as a keyboard list that appears when focused). The camera and strip positions are kept for the session.
 
 **Pages:**
-- Home: one stage, with your name, intro, availability, résumé and an index into every page. No long scroll and no footer.
+- Home: the hero with its ridge, the manifesto, a sticky horizontal reel of selected work, capabilities and experience.
 - `/work` (LIST · WHEEL · GRID) and 5 static case studies with scroll-to-advance.
 - `/about`: the manifesto, story, stamp portrait, live telemetry card and experience.
 - `/services`: the process deck, what I can build, capabilities and a call to action.
@@ -60,7 +60,7 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 **Built to degrade gracefully:**
 - All content is server-rendered HTML.
 - Reduced motion turns off smooth scroll, pinning and WebGL.
-- Touch devices get CSS halftones instead of WebGL. The home stage shows the same skyline as a dot screen, plus your cut-out still once you export one.
+- Touch devices get CSS halftones instead of WebGL. The hero shows the same ridge as a dot screen, plus your cut-out still once you export one.
 - No-JS visitors get the complete page.
 - Losing the WebGL context falls back to the DOM.
 
@@ -106,9 +106,8 @@ pnpm dev                     # http://localhost:3000
 | `?boot=0` | Skip the boot preloader |
 | `?view=grid` / `list` / `wheel` | Force a `/work` view for this visit |
 | `?cursor=mac` / `?cursor=system` | Force the Mac pointer or the system cursor for this visit |
-| `?figure=standin` | Dev only: show the mannequin even when your model exists |
 | `?figure=still` | Dev only: export the phone still of the figure (see below) |
-| `?figure=/media/hero/_test/x.glb` | Dev only: try another GLB in the home scene |
+| `?figure=/media/hero/_test/x.glb` | Dev only: try another GLB on the hero's ridge |
 
 ## Editing content
 
@@ -119,7 +118,7 @@ All copy lives in typed modules under `content/`. Nothing is hard-coded in compo
 | `content/site.ts` | Name, role, links, résumé, location/timezone, availability, hero subline, manifesto, about page, and `nav` (the header, menu, footer, ⌘K and the home index all read it) |
 | `content/projects.ts` | The 5 case studies, built from blocks (`text`, `features`, `stack`, `gallery`, `stats`, `status`) |
 | `content/experience.ts` | Roles. The Infotact description is a draft to refine. |
-| `content/capabilities.ts` | Skill groups on /services (also feeds the marquee and /about's toolbox) |
+| `content/capabilities.ts` | Skill groups on the home page and /services (also feeds the marquee and /about's toolbox) |
 | `content/services.ts` | /services: the intro, process cards and offerings (no prices) |
 | `content/music.ts` | The playlist behind the scrollbar's ♪ (built-in pieces, or your own MP3s) |
 
@@ -144,15 +143,14 @@ Drop files at the documented paths and rebuild. They are picked up automatically
 
 Prompts for every asset are in **[`docs/ASSET_PROMPTS.md`](docs/ASSET_PROMPTS.md)**.
 
-## The home scene and your 3D model
+## The hero's ridge and your 3D model
 
-The home page is one stage (`components/home/HomeStage.tsx`). Your name, intro, availability, résumé and the index into every page are real HTML. On desktop WebGL, `lib/gl/scene.ts` draws the scene behind them:
-- **Ground:** a ring of hills built from one height function (`lib/gl/terrain.ts`), dithered in 3 px dots, with contour lines that glow orange under the cursor. The same function places the feet and draws the dot-screen fallback on the server.
-- **Figure:** dithered in 2 px cells with an RGB split at its edges. Under the cursor it shows the "render": full colour with an orange rim.
-- **Camera:** drag to orbit, wheel to move closer or further. The pointer adds a little parallax, and when you leave it alone the stage drifts and settles back to the hero framing.
-- **Readouts:** the HUD shows the live camera angles, distance, triangle count, figure and clip.
+The hero (`components/home/Hero.tsx`) is your name as a giant halftone, in real HTML. On desktop WebGL, `lib/gl/scene.ts` draws a scene behind it:
+- **Ground:** a ring of hills built from one height function (`lib/gl/terrain.ts`), dithered in 3 px dots, with contour lines that glow orange under the cursor. The same function places your model's feet and draws the dot-screen fallback on the server.
+- **Your model,** once added: dithered in 2 px cells with an RGB split at its edges, standing in front of your name. Under the cursor it shows the "render": full colour with an orange rim.
+- **Camera:** drag to orbit. The pointer adds a little parallax, and when you leave it alone the view drifts and settles back to the front.
 
-Without your model, a procedural wooden mannequin stands in.
+Until you add a model, the ridge shows on its own.
 
 **Adding your model:**
 1. Put `me.glb` in `public/media/hero/`.
@@ -228,16 +226,16 @@ app/          routes (/, /work, /work/[slug], /about, /services, /contact, 404),
 content/      all copy and data (typed)
 components/
   chrome/     HUD, header, mobile menu, cursor, dynamic scrollbar + music player, footer + SAY HELLO, stickers, preloader, ⌘K palette
-  home/       the stage (name, intro, readouts), its server-drawn fallback, the index card
+  home/       hero (+ the ridge's server-drawn fallback), intro / manifesto, work reel
   services/   process deck + offerings, capabilities, call to action
   contact/    the contact form and details
   work/       work views (switcher, title reel, field), project media, case blocks, next project
-  about/      manifesto, stamp portrait, telemetry card, experience
+  about/      stamp portrait, telemetry card, experience
   transition/ transition link, route watcher, wipe/morph layer
   gl/         the WebGL canvas
 lib/
   gl/         OGL engine, shaders, procedural posters/text masks, DOM↔GL registry;
-              the home scene: scene + scene-shaders, terrain (ground + camera framing), mannequin, figure-glb (lazy model loader)
+              the hero's 3D scene: scene + scene-shaders, terrain (ground + camera framing), figure-glb (lazy model loader)
   motion/     GSAP registration + eases, Lenis handle
   field/      the /work views: field geometry + physics, title-reel physics, lightbox, view store, tile lists (built from content at build time)
   music/      the site-wide music player and the built-in Web Audio pieces
@@ -271,8 +269,8 @@ lib/
 - Reduced motion is respected everywhere, including an override through the pre-paint script.
 - The custom pointer can be switched off from ⌘K ("Use system cursor") for anyone who relies on a larger OS cursor.
 - The scrollbar is a real button that blooms on keyboard focus. The player is a labelled dialog and its timeline is a slider; Esc returns focus to ♪, and ⌘K can play or pause the music.
-- The home stage is real HTML first. The 3D scene behind it is decorative, and every page it leads to is a link in the index card and the header.
-- Initial JS on `/` is about 270 KB gzipped (React 19 + GSAP make up most of it). The WebGL engine (about 13 KB), the home scene (about 10 KB, home only), the model loader (about 8 KB, only with a model) and the palette load later.
+- The hero's 3D ridge is decorative; all text and links are real HTML.
+- Initial JS on `/` is about 273 KB gzipped (React 19 + GSAP make up most of it). The WebGL engine (about 13 KB), the hero's scene (about 9 KB, home only), the model loader (about 8 KB, only with a model) and the palette load later.
 
 ## Deployment
 

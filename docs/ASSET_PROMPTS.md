@@ -37,7 +37,7 @@ Suggested tools: Midjourney v7, Imagen, Flux or Firefly for stills; Veo, Sora, K
 
 | # | Save as | Used in | Prompt |
 |---|---|---|---|
-| 1 | `public/media/work/adaptive-learning/cover.jpg` | `/work`, case-study hero, OG | Overhead editorial still life on an ink-black surface: dozens of small bone-white paper index cards arranged as a branching path that splits and reconverges like a learning roadmap; one continuous signal-orange (#FF4D00) thread tracing a single personalised route through them; a few cards marked with tiny pencil check marks; soft raking light, deep shadows, macro paper-fibre detail; minimal, generous negative space, subtle film grain |
+| 1 | `public/media/work/adaptive-learning/cover.jpg` | Work reel, `/work`, case-study hero, OG | Overhead editorial still life on an ink-black surface: dozens of small bone-white paper index cards arranged as a branching path that splits and reconverges like a learning roadmap; one continuous signal-orange (#FF4D00) thread tracing a single personalised route through them; a few cards marked with tiny pencil check marks; soft raking light, deep shadows, macro paper-fibre detail; minimal, generous negative space, subtle film grain |
 | 2 | `public/media/work/task-management-app/cover.jpg` | Same | Top-down flat lay on charcoal felt: a precise Swiss grid of bone-white paper task cards with hand-drawn checkboxes, several ticked in signal-orange (#FF4D00) ink; smaller subtask cards clipped beneath their parents with black binder clips; one card lifted at an angle casting a crisp shadow; controlled overhead softbox light; minimal editorial still life, subtle film grain |
 | 3 | `public/media/work/seva/cover.jpg` | Same (concept art, in development) | Cinematic still life on dark slate: everyday service tools — a wrench, a paint brush, scissors, a screwdriver, a stethoscope, a sponge — arranged in a perfect radial ring around a single glossy signal-orange (#FF4D00) map pin standing at the centre; hard top light with long shadows; ink-black falloff; matte textures; symmetrical, minimal, editorial product photography, film grain |
 | 4 | `public/media/work/desi-etsy/cover.jpg` | Same (concept art, in development) | Editorial still life of handmade Asian crafts on an ink-black plinth — a hand-thrown unglazed clay cup, folded indigo block-printed cotton, a hammered brass bowl, a woven bamboo coaster — lit by one narrow beam of warm light; a single saffron-orange (#FF4D00) silk thread draped across the composition; rich tactile textures, deep shadows; medium format, minimal, generous negative space, film grain |
@@ -47,7 +47,7 @@ Suggested tools: Midjourney v7, Imagen, Flux or Firefly for stills; Veo, Sora, K
 
 **Status:** not generated yet.
 
-When a `loop.mp4` exists, it plays muted in place of the still on `/work` and in the case hero, with the cover as its poster. It's paused when the visitor prefers reduced motion.
+When a `loop.mp4` exists, it plays muted in place of the still on the reel, on `/work` and in the case hero, with the cover as its poster. It's paused when the visitor prefers reduced motion.
 
 Adding a loop has a trade-off: that project loses the WebGL blueprint effect and the card→case morph, which work on stills only.
 
@@ -62,7 +62,7 @@ Adding a loop has a trade-off: that project loses the WebGL blueprint effect and
 |---|---|---|
 | 8 | `public/media/work/adaptive-learning/shot-1.webp` … `shot-4.webp` (+ `loop.mp4`) | At 1440×900: the home screen, a learning path, the schedule, and progress tracking. Plus a 10 s screen recording scrolling through a flow, cropped to 16:10. |
 | 9 | `public/media/work/task-management-app/shot-1.webp` … `shot-3.webp` | The task board, a task with subtasks, and the sign-in screen (run the app locally) |
-| 10 | `public/media/work/personal-portfolio/shot-*.webp` | Screens of this site (the home stage, the /work field, the paper theme, /services) |
+| 10 | `public/media/work/personal-portfolio/shot-*.webp` | Screens of this site (the hero, the /work field, the paper theme, /services) |
 
 If you'd rather have the agent capture item 8 automatically, add `aiadaptivelearning.netlify.app` to the cloud environment's **Allowed domains**.
 

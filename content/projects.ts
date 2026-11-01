@@ -225,7 +225,7 @@ export const projects: Project[] = [
         type: "features",
         label: "Under the hood",
         items: [
-          { title: "A home page in 3D", body: "A figure on a ring of dithered hills, in front of a halftone name you paint with the cursor. The cursor also renders the figure in full colour, and dragging orbits the camera." },
+          { title: "Ink-field hero", body: "A WebGL halftone of my name over a dithered 3D ridge. Paint it with the cursor, or drag to look around." },
           { title: "Blueprint → render images", body: "Project images render as edge-detected blueprints and resolve to colour with a scanline sweep." },
           { title: "Dither page transitions", body: "An ordered-dither wipe and a shared-element morph between pages." },
           { title: "⌘K command menu", body: "Keyboard-first navigation and actions from anywhere on the site." },
@@ -237,7 +237,7 @@ export const projects: Project[] = [
         label: "Stack",
         items: [
           { name: "Next.js 16 + React 19", why: "Static, server-rendered pages with client islands." },
-          { name: "OGL", why: "A small WebGL layer (about 13 KB gzipped, plus a 10 KB scene on the home page) for the shaders, render targets, planes and the 3D stage." },
+          { name: "OGL", why: "A small WebGL layer (about 13 KB gzipped, plus a 9 KB scene on the home page) for the shaders, render targets, planes and the hero's 3D ridge." },
           { name: "GSAP + Lenis", why: "Scroll-linked motion, split-text and smooth scrolling on one ticker." },
           { name: "Tailwind CSS 4", why: "Design tokens in CSS, themes via data attributes." },
           { name: "EmailJS", why: "Serverless contact form." },
@@ -247,9 +247,9 @@ export const projects: Project[] = [
         type: "gallery",
         label: "Screens",
         images: [
-          { src: "/media/work/personal-portfolio/shot-1.webp", alt: "Home stage: a dithered figure on a ridge in front of the halftone name, with an orange stroke painted across it", caption: "Home — paint the name, render the figure" },
+          { src: "/media/work/personal-portfolio/shot-1.webp", alt: "The hero: the halftone name over a dithered ridge, with an orange stroke painted across it", caption: "Hero — paint the name over the ridge" },
           { src: "/media/work/personal-portfolio/shot-2.webp", alt: "The work field: a drag-through grid of project tiles with one picture open in the middle", caption: "Work — the endless GRID field" },
-          { src: "/media/work/personal-portfolio/shot-3.webp", alt: "The home stage on the paper theme, with the figure and name in ink", caption: "Paper theme" },
+          { src: "/media/work/personal-portfolio/shot-3.webp", alt: "The hero on the paper theme, with the name and the ridge in ink", caption: "Paper theme" },
           { src: "/media/work/personal-portfolio/shot-4.webp", alt: "The Services page with the process cards fanned out and the list of offerings", caption: "Services — the process deck" },
         ],
       },
