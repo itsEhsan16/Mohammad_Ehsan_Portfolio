@@ -8,7 +8,7 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 - **Hero:** paint the giant halftone name with your cursor to "render" it in signal orange.
 - **Project images:** they start as edge-detected blueprints and develop into colour as they scroll into view.
 - **Page navigation:** pages "compile" through an ordered-dither wipe, or morph from a project card into its case study.
-- **`/work`:** an endless field of every project's tiles. You drag, scroll or arrow through it; the middle of the screen renders in colour while the edges stay blueprint.
+- **`/work`:** three views behind a LIST · WHEEL · GRID switcher, all of them endless. LIST and WHEEL are a looping strip of big titles with a preview card; GRID is a drag-through field where the middle of the screen renders in colour while the edges stay blueprint.
 
 ## Highlights
 
@@ -31,16 +31,22 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 - Optional synthesized UI sounds (Web Audio, off by default).
 - Draggable holographic stickers.
 
-**The work field** (`/work`):
+**`/work` views** (switcher at the bottom centre; the choice is remembered, GRID by default):
+- **LIST** — a looping column of project titles. Hover a title to preview it; the preview card slides beside it and "renders" the cover in behind an orange scan line.
+- **WHEEL** — the same titles as spokes of a wheel whose hub sits off-screen. It snaps to the title in the middle. LIST and WHEEL morph into each other, row by row.
+- **GRID** — the work field, below.
+- Scroll, drag, swipe or ↑↓ move the strip; Enter opens the highlighted project, and the preview picture morphs into the case study.
+
+**The work field** (GRID):
 - A wrap-around grid of project tiles: key visuals, screenshots and type-only spec sheets. Drag, scroll/trackpad, arrow keys or touch move it; it never runs out.
 - While it moves, cards shrink, flatten along the direction of travel, round their corners and split into RGB. At rest they lean toward the pointer.
 - Colour belongs to the middle of the screen: cards toward the edges cross-fade to a grey, dot-screened blueprint.
 - Rest on a card and everything else steps back. Click it and the picture flies to the middle, with a link that morphs into the case study.
 - CRT glass over the field (grade, scan lines, vignette, a slow refresh band), a dithered WebGL backdrop that pans with the field and tears open under the cursor, and a HUD with live coordinates.
-- An **Index view** toggle switches to the list/grid index; the choice is remembered. Reduced motion, crawlers and no-JS visitors get the index, and the camera position is kept for the session.
+- Reduced motion and crawlers start on LIST; no-JS visitors get a plain list of links (it stays in the page as a keyboard list that appears when focused). The camera and strip positions are kept for the session.
 
 **Pages:**
-- Home, `/work` (the field, plus an index with filters, list/grid and hover preview) and 5 static case studies with scroll-to-advance.
+- Home, `/work` (LIST · WHEEL · GRID) and 5 static case studies with scroll-to-advance.
 - `/about` (stamp portrait and live telemetry card) and a custom 404.
 
 **Built to degrade gracefully:**
@@ -90,7 +96,7 @@ pnpm dev                     # http://localhost:3000
 | `?gl=0` | Disable WebGL |
 | `?boot=1` | Force the boot preloader |
 | `?boot=0` | Skip the boot preloader |
-| `?view=field` / `?view=index` | Force a `/work` view for this visit |
+| `?view=grid` / `list` / `wheel` | Force a `/work` view for this visit |
 
 ## Editing content
 
@@ -143,14 +149,14 @@ content/      all copy and data (typed)
 components/
   chrome/     HUD, header, mobile menu, cursor, footer + SAY HELLO, stickers, preloader, ⌘K palette
   home/       hero, manifesto, work reel, capabilities, services, experience, contact
-  work/       work field, work index, project media, case blocks, next project
+  work/       work views (switcher, title reel, field), project media, case blocks, next project
   about/      stamp portrait, telemetry card
   transition/ transition link, route watcher, wipe/morph layer
   gl/         the WebGL canvas
 lib/
   gl/         OGL engine, shaders, procedural posters/text masks, DOM↔GL registry
   motion/     GSAP registration + eases, Lenis handle
-  field/      the /work field: geometry, physics controller, lightbox, tile list (built from content at build time)
+  field/      the /work views: field geometry + physics, title-reel physics, lightbox, view store, tile lists (built from content at build time)
   transition.ts  wipe.ts  store.ts  theme.ts  audio.ts  time.ts  media.ts (build-time asset checks)  seo.ts
 ```
 

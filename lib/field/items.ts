@@ -2,7 +2,7 @@ import "server-only";
 import type { Project } from "@/content/types";
 import { statusLabel } from "@/content/projects";
 import { imageSize } from "@/lib/media";
-import type { FieldItem } from "./types";
+import type { FieldItem, ReelProject } from "./types";
 
 type Draft = Omit<FieldItem, "n">;
 
@@ -58,4 +58,20 @@ export function fieldItems(projects: Project[]): FieldItem[] {
     if (sheets[i]) rest.push(sheets[i]);
   }
   return [...covers, ...rest].map((d, i) => ({ ...d, n: i + 1 }));
+}
+
+/** The LIST / WHEEL strip: one entry per project, with its cover's pixel size for the preview card. */
+export function reelProjects(projects: Project[]): ReelProject[] {
+  return projects.map((p) => {
+    const size = p.cover ? imageSize(p.cover.src) : undefined;
+    return {
+      slug: p.slug,
+      index: p.index,
+      title: p.title,
+      kind: p.kind,
+      status: statusLabel[p.status],
+      tagline: p.tagline,
+      cover: p.cover && size ? { src: p.cover.src, alt: p.cover.alt, w: size.w, h: size.h } : undefined,
+    };
+  });
 }

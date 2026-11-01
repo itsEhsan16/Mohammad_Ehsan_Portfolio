@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { WorkIndex } from "@/components/work/WorkIndex";
 import { WorkView } from "@/components/work/WorkView";
-import { SplitReveal } from "@/components/ui/SplitReveal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { TransitionLink } from "@/components/transition/TransitionLink";
+import { statusLabel } from "@/content/projects";
 import { resolvedProjects } from "@/lib/media";
-import { fieldItems } from "@/lib/field/items";
+import { fieldItems, reelProjects } from "@/lib/field/items";
 
 export const metadata: Metadata = {
   title: "Work",
@@ -13,25 +13,36 @@ export const metadata: Metadata = {
   alternates: { canonical: "/work" },
 };
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 export default function WorkPage() {
   const projects = resolvedProjects();
   return (
     <main id="main" tabIndex={-1} className="outline-none">
-      <WorkView items={fieldItems(projects)}>
-        <header className="px-gutter pb-10 pt-[calc(var(--hud-h)+6rem)]">
+      <WorkView items={fieldItems(projects)} projects={reelProjects(projects)}>
+        {/* the page without JS and for crawlers; with JS it becomes the keyboard shortcut list (see WorkView) */}
+        <section className="work-static px-gutter pb-24 pt-[calc(var(--hud-h)+6rem)]">
           <SectionLabel index="02" title="Index of work" count={projects.length} />
-          <div className="mt-6 flex items-start gap-3">
-            <SplitReveal as="h1" type="chars" trigger="load" className="t-display text-giant leading-[0.8]">
-              Work
-            </SplitReveal>
-            <span className="t-label mt-[2vw] text-[clamp(14px,1.6vw,22px)] text-signal-text">({String(projects.length).padStart(2, "0")})</span>
-          </div>
-          <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-fg/85">
-            A selection of projects I&apos;ve worked on — shipped, open source and in development. Each one opens into a
-            short case study.
-          </p>
-        </header>
-        <WorkIndex projects={projects} />
+          <h1 className="t-display mt-6 text-giant leading-[0.8]">Work</h1>
+          <nav aria-label="Projects" className="mt-12">
+            <p className="work-static__hint t-label text-[10px] text-muted">Jump to a project</p>
+            <ol className="work-static__list border-t border-line">
+              {projects.map((p) => (
+                <li key={p.slug} className="border-b border-line">
+                  <TransitionLink href={`/work/${p.slug}`} className="work-static__link group flex flex-wrap items-baseline gap-x-6 gap-y-2 py-6">
+                    <span className="t-label w-10 text-muted">N°{pad(p.index)}</span>
+                    <span className="work-static__title t-display text-[clamp(2.4rem,6vw,6.6rem)] leading-[0.88] transition-colors group-hover:text-signal-text">
+                      {p.title}
+                    </span>
+                    <span className="work-static__meta t-label text-muted">
+                      {p.kind} · {statusLabel[p.status]}
+                    </span>
+                  </TransitionLink>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </section>
       </WorkView>
     </main>
   );

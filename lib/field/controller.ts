@@ -1,7 +1,7 @@
 "use client";
 
 import { gsap } from "@/lib/motion/gsap";
-import { setFieldBackdrop, type FieldBackdropState } from "@/lib/gl/registry";
+import { getFieldBackdrop, setFieldBackdrop, type FieldBackdropState } from "@/lib/gl/registry";
 import type { FieldGeometry } from "./geometry";
 
 /**
@@ -305,30 +305,32 @@ export class FieldController {
     });
     on(window, "blur", () => this.release());
 
-    on(r, "keydown", (e) => {
-      // anywhere in the field (focus may sit on its heading after a page transition), but not on its links and buttons
-      const t = e.target as HTMLElement | null;
-      if (this.locked || e.metaKey || e.ctrlKey || e.altKey || (t !== r && t?.closest("a,button,input,textarea,select"))) return;
-      const steps: Record<string, [number, number]> = {
-        ArrowLeft: [-1, 0],
-        ArrowRight: [1, 0],
-        ArrowUp: [0, -1],
-        ArrowDown: [0, 1],
-      };
-      const s = steps[e.key];
-      if (s) {
-        e.preventDefault();
-        this.kbd = true;
-        this.step(s[0], s[1]);
-      } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        this.openCentre();
-      }
-    });
     on(r, "focus", () => {
       if (r.matches(":focus-visible")) this.kbd = true;
     });
     on(r, "blur", () => (this.kbd = false));
+  }
+
+  /** Keyboard, routed from the page (focus may be on the heading after a transition). True when handled. */
+  key(e: KeyboardEvent) {
+    if (this.locked) return false;
+    const steps: Record<string, [number, number]> = {
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+    };
+    const s = steps[e.key];
+    if (s) {
+      this.kbd = true;
+      this.step(s[0], s[1]);
+      return true;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      this.openCentre();
+      return true;
+    }
+    return false;
   }
 
   private release() {
@@ -609,6 +611,6 @@ export class FieldController {
     this.off.forEach((f) => f());
     this.timers.forEach((t) => window.clearTimeout(t));
     window.clearTimeout(this.scaleTimer);
-    setFieldBackdrop(null);
+    if (getFieldBackdrop() === this.backdrop) setFieldBackdrop(null);
   }
 }

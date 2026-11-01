@@ -22,3 +22,14 @@ export interface FieldItem {
   w?: number;
   h?: number;
 }
+
+/** One project in the LIST / WHEEL strip (built on the server; see lib/field/items.ts). */
+export interface ReelProject {
+  slug: string;
+  index: number;
+  title: string;
+  kind: string;
+  status: string;
+  tagline: string;
+  cover?: { src: string; alt: string; w: number; h: number };
+}

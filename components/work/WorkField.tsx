@@ -6,9 +6,8 @@ import type { FieldItem } from "@/lib/field/types";
 import { fieldGeometry, frameIn, tileAt } from "@/lib/field/geometry";
 import { FieldController, type CellRef } from "@/lib/field/controller";
 import { Lightbox } from "@/lib/field/lightbox";
-import { setWorkView } from "@/lib/field/view";
+import { serverViewportSnapshot, subscribeViewport, viewportSnapshot } from "@/lib/field/viewport";
 import { whenVisible } from "@/lib/transition";
-import { setState } from "@/lib/store";
 import { reducedMotion } from "@/lib/motion/gsap";
 import { click, tick } from "@/lib/audio";
 import { TransitionLink } from "@/components/transition/TransitionLink";
@@ -16,21 +15,6 @@ import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/utils";
 
 const pad = (n: number, l = 2) => String(n).padStart(l, "0");
-
-function subscribeViewport(cb: () => void) {
-  let t = 0;
-  const on = () => {
-    window.clearTimeout(t);
-    t = window.setTimeout(cb, 140);
-  };
-  window.addEventListener("resize", on);
-  return () => {
-    window.removeEventListener("resize", on);
-    window.clearTimeout(t);
-  };
-}
-const viewport = () => `${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`;
-const serverViewport = () => "1440x900";
 
 // where the camera was, so coming back from a case study lands on the same spot
 const CAM_KEY = "me:fieldcam";
@@ -57,8 +41,18 @@ type Shown = { item: number; cell: HTMLElement; via: "pointer" | "keyboard"; lo?
  * blueprint, resting on a card holds it, and a click flies the picture to the
  * middle. The physics live in lib/field/controller.ts; this is the DOM.
  */
-export function WorkField({ items }: { items: FieldItem[] }) {
-  const size = useSyncExternalStore(subscribeViewport, viewport, serverViewport);
+export function WorkField({
+  items,
+  apiRef,
+  leaving = false,
+}: {
+  items: FieldItem[];
+  /** WorkView routes arrow keys and Enter here. */
+  apiRef?: React.RefObject<{ key(e: KeyboardEvent): boolean } | null>;
+  /** Fading out before another view takes over. */
+  leaving?: boolean;
+}) {
+  const size = useSyncExternalStore(subscribeViewport, viewportSnapshot, serverViewportSnapshot);
   const [W, H] = size.split("x").map(Number);
   const geo = useMemo(() => fieldGeometry(W, H, items.length), [W, H, items.length]);
   const cells = useMemo(() => {
@@ -72,7 +66,7 @@ export function WorkField({ items }: { items: FieldItem[] }) {
     () =>
       items.map((it) =>
         it.src
-          ? getImageProps({ src: it.src, alt: it.alt ?? "", fill: true, sizes: "(max-width: 640px) 70vw, 30vw", quality: 75 }).props
+          ? getImageProps({ src: it.src, alt: it.alt ?? "", fill: true, sizes: "(max-width: 640px) 70vw, 30vw", quality: 75, loading: "eager" }).props
           : null,
       ),
     [items],
@@ -93,10 +87,10 @@ export function WorkField({ items }: { items: FieldItem[] }) {
                   {img ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                      <img {...img} loading="eager" draggable={false} className="wf-img" />
+                      <img {...img} draggable={false} className="wf-img" />
                       <div className="wf-blue">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img {...img} alt="" loading="eager" draggable={false} className="wf-img" />
+                        <img {...img} alt="" draggable={false} className="wf-img" />
                       </div>
                     </>
                   ) : (
@@ -187,12 +181,9 @@ export function WorkField({ items }: { items: FieldItem[] }) {
     c.hold();
     const stopArrive = whenVisible(() => c.arrive());
     if (lbRoot.current && lbBox.current) lb.current = new Lightbox({ root: lbRoot.current, box: lbBox.current, caption: lbCap.current }, reduced);
-
-    const html = document.documentElement;
-    html.dataset.field = "on";
-    window.scrollTo(0, 0);
-    setState({ field: true });
+    if (apiRef) apiRef.current = c;
     return () => {
+      if (apiRef?.current === c) apiRef.current = null;
       saveCam(c.cam.tu, c.cam.tv);
       stopArrive();
       c.destroy();
@@ -200,10 +191,18 @@ export function WorkField({ items }: { items: FieldItem[] }) {
       ctrl.current = null;
       lb.current = null;
       w.querySelectorAll(".is-waiting,.is-arriving").forEach((el) => el.classList.remove("is-waiting", "is-arriving"));
-      delete html.dataset.field;
-      setState({ field: false });
+      delete document.documentElement.dataset.lightbox;
     };
+    // the api ref is stable for the life of the view
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // while a picture is open the view switcher steps aside
+  useEffect(() => {
+    const html = document.documentElement;
+    if (open) html.dataset.lightbox = "";
+    else delete html.dataset.lightbox;
+  }, [open]);
 
   // geometry changed (resize): hand the new cells over without moving the camera
   useLayoutEffect(() => {
@@ -274,11 +273,11 @@ export function WorkField({ items }: { items: FieldItem[] }) {
   return (
     <div
       ref={root}
-      className="wf"
+      className={cn("wf", leaving && "is-leaving")}
       tabIndex={0}
       role="region"
       aria-roledescription="project field"
-      aria-label="Work. Drag, scroll or use the arrow keys to move; press Enter to open the project in the middle."
+      aria-label="Work, as a grid. Drag, scroll or use the arrow keys to move; press Enter to open the project in the middle."
       data-lenis-prevent
       style={
         {
@@ -289,8 +288,6 @@ export function WorkField({ items }: { items: FieldItem[] }) {
         } as React.CSSProperties
       }
     >
-      <h1 className="sr-only">Work</h1>
-
       {/* one chromatic-aberration filter for the whole field; its offsets are rewritten while it moves */}
       <svg aria-hidden="true" width="0" height="0" className="absolute">
         <filter id="wf-ab" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
@@ -318,41 +315,17 @@ export function WorkField({ items }: { items: FieldItem[] }) {
         <rect x="12.5" y="12.5" width="3" height="3" fill="currentColor" />
       </svg>
 
-      <nav aria-label="Projects" className="wf-skip" data-field-ui>
-        <p className="t-label mb-3 text-[10px] text-muted">Jump to a project</p>
-        <ul className="space-y-1.5">
-          {projects.map((p) => (
-            <li key={p.slug}>
-              <TransitionLink href={`/work/${p.slug}`} className="t-label text-[11px] text-fg hover:text-signal-text">
-                N°{pad(p.index)} {p.title}
-              </TransitionLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
       <div className="wf-hud" data-field-ui>
-        <div className="flex min-w-0 items-center gap-4">
-          <button type="button" onClick={() => setWorkView("index")} onMouseEnter={tick} className="wf-chip">
-            <span aria-hidden="true" className="grid grid-cols-2 gap-[2px]">
-              <i className="block h-[3px] w-[3px] bg-current" />
-              <i className="block h-[3px] w-[3px] bg-current" />
-              <i className="block h-[3px] w-[3px] bg-current" />
-              <i className="block h-[3px] w-[3px] bg-current" />
-            </span>
-            Index view
-          </button>
-          <span className="hidden whitespace-nowrap lg:inline">Drag · scroll · arrows · enter</span>
-        </div>
-        <p className="hidden min-w-0 truncate md:block" aria-hidden="true">
+        <p className="min-w-0 truncate" aria-hidden="true">
           <span className="mr-2 inline-block h-[6px] w-[6px] bg-signal align-middle" />
-          In view — N°{pad(inView.index)} {inView.title} · {inView.caption}
+          <span className="hidden sm:inline">In view — </span>N°{pad(inView.index)} {inView.title}
+          <span className="hidden lg:inline"> · {inView.caption}</span>
         </p>
         <div className="flex items-center gap-4 whitespace-nowrap tabular-nums">
-          <span ref={coords} aria-hidden="true">
+          <span ref={coords} aria-hidden="true" className="hidden sm:inline">
             X+000.00 Y+000.00
           </span>
-          <span className="hidden sm:inline">
+          <span className="hidden lg:inline">
             {pad(projects.length)} projects / {pad(items.length)} tiles
           </span>
         </div>

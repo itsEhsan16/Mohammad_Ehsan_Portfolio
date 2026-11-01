@@ -393,43 +393,6 @@ html:not(.reduce) .live-dot {
   }
 }
 
-/* work index list */
-.work-row {
-  transition: opacity 0.4s;
-}
-@media (hover: hover) {
-  .work-list:hover .work-row {
-    opacity: 0.35;
-  }
-  .work-list li[data-active] .work-row {
-    opacity: 1;
-  }
-}
-.work-title {
-  transition: color 0.3s;
-}
-.work-list li[data-active] .work-title {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-stretch: 100%;
-  text-transform: none;
-  letter-spacing: -0.02em;
-  color: var(--signal-text);
-}
-.work-arrow {
-  transition:
-    transform 0.6s var(--ease-expo),
-    background-color 0.3s,
-    color 0.3s;
-}
-.work-list li[data-active] .work-arrow {
-  transform: rotate(45deg);
-  background: var(--signal);
-  color: #0b0b0a;
-  border-color: transparent;
-}
-
 /* next-project zone: sticky scroll-to-advance on desktop with motion */
 @media (min-width: 1024px) and (pointer: fine) {
   html.js:not(.reduce) .next-zone {
@@ -475,19 +438,153 @@ html[data-morphing] #main {
 }
 
 /* ───────────────────────── /work field ───────────────────────── */
-/* the server renders the index; when the field is due, keep it hidden until React swaps it in (failsafe after 4 s) */
-html[data-workview="field"]:not([data-field]) [data-work-index] {
+/*
+ * The server renders a plain list of projects (.work-static): the page without JS and for crawlers.
+ * With JS a full-screen view (LIST / WHEEL / GRID) takes over; until it mounts the list stays hidden
+ * (failsafe after 4 s), and afterwards it lives on as a keyboard list that appears when focused.
+ */
+html[data-workview]:not([data-workui]) .work-static {
   visibility: hidden;
   animation: reveal-failsafe 0s linear 4s forwards;
 }
-html[data-field] {
+html[data-workui] {
   overflow: hidden;
 }
+html[data-workui] .work-static {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-workui] .work-static:has(nav :focus) {
+  left: var(--gutter);
+  bottom: 60px;
+  z-index: 50;
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: 14px 16px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+html[data-workui] .work-static:has(nav :focus) > :not(nav),
+html[data-workui] .work-static:has(nav :focus) .work-static__meta {
+  display: none;
+}
+.work-static__hint {
+  display: none;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__hint {
+  display: block;
+  margin-bottom: 10px;
+}
+html[data-workui] .work-static:has(nav :focus) nav {
+  margin: 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__list {
+  border: 0;
+}
+html[data-workui] .work-static:has(nav :focus) li {
+  border: 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__link {
+  gap: 10px;
+  padding: 4px 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 450;
+  font-stretch: 100%;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
 
-.wf {
+/* LIST · WHEEL · GRID */
+.view-switch {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  z-index: 45;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transform: translateX(-50%);
+  transition:
+    opacity 0.3s,
+    transform 0.5s var(--ease-expo);
+}
+html[data-lightbox] .view-switch {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 14px);
+}
+.view-switch__pill {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background: var(--fg);
+}
+.view-switch.is-ready .view-switch__pill {
+  transition:
+    transform 0.55s var(--ease-expo),
+    width 0.55s var(--ease-expo);
+}
+.view-switch__btn {
+  position: relative;
+  z-index: 1;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+.view-switch__btn:hover {
+  color: var(--fg);
+}
+.view-switch__btn.is-on {
+  color: var(--bg);
+}
+
+/* views fade out before another takes over */
+.wf.is-leaving,
+.wr.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+/* shared by the grid (.wf) and the list/wheel (.wr): the plate colour and the CRT glass */
+:is(.wf, .wr) {
   --wf-plate: #141413;
   --crt-line: rgb(0 0 0 / 0.3);
   --crt-vig: rgb(0 0 0 / 0.8);
+}
+[data-theme="paper"] :is(.wf, .wr) {
+  --wf-plate: #e0dcd3;
+  --crt-line: rgb(40 30 10 / 0.07);
+  --crt-vig: rgb(60 48 24 / 0.3);
+}
+.wf {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -500,15 +597,11 @@ html[data-field] {
   cursor: grab;
   outline: none;
 }
-[data-theme="paper"] .wf {
-  --wf-plate: #e0dcd3;
-  --crt-line: rgb(40 30 10 / 0.07);
-  --crt-vig: rgb(60 48 24 / 0.3);
-}
 .wf.is-dragging {
   cursor: grabbing;
 }
-.wf:focus-visible::after {
+.wf:focus-visible::after,
+.wr:focus-visible::after {
   content: "";
   position: absolute;
   inset: calc(var(--hud-h) + 64px) var(--gutter) 52px;
@@ -880,29 +973,6 @@ html:not(.reduce) .wf-crt::after {
   border-color: color-mix(in oklab, var(--fg) 50%, transparent);
 }
 
-/* keyboard-only shortcut list: invisible until something inside it has focus */
-.wf-skip {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-.wf-skip:focus-within {
-  left: var(--gutter);
-  bottom: 58px;
-  z-index: 30;
-  width: auto;
-  height: auto;
-  overflow: visible;
-  clip-path: none;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-}
-
 /* cursor words */
 .wf-label {
   position: fixed;
@@ -1031,5 +1101,250 @@ html:not(.reduce) .wf-crt::after {
   }
   .wf-lbox__tick {
     display: none;
+  }
+}
+
+/* ───────────────────────── /work list & wheel ───────────────────────── */
+.wr {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  outline: none;
+}
+.wr-rows {
+  position: absolute;
+  inset: 0;
+}
+.wr-row {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  height: var(--wr-pitch);
+  font-size: var(--wr-fs);
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--fg) 30%, transparent);
+  transform-origin: 0 50%;
+  will-change: transform, opacity;
+  transition: color 0.35s;
+}
+.wr-row:hover {
+  color: color-mix(in oklab, var(--fg) 62%, transparent);
+}
+.wr-row.is-active {
+  color: var(--fg);
+}
+.wr-bullet {
+  flex: none;
+  width: 0.15em;
+  height: 0.15em;
+  background: var(--signal);
+  transform: scale(0);
+  transition: transform 0.45s var(--ease-expo);
+}
+.wr-row.is-active .wr-bullet {
+  transform: none;
+}
+.wr-name {
+  font-family: var(--font-display);
+  font-weight: 860;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+}
+.wr-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 0.2em;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.3s,
+    transform 0.55s var(--ease-expo);
+}
+.wr-row.is-active .wr-tags {
+  opacity: 1;
+  transform: none;
+}
+.wr-chip {
+  padding: 6px 10px 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--fg) 82%, transparent);
+}
+.wr-go {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.wr-row:hover .wr-go {
+  background: var(--signal);
+  color: #0b0b0a;
+  border-color: transparent;
+}
+
+/* the preview card */
+.wr-card {
+  position: absolute;
+  right: var(--gutter);
+  top: 0;
+  z-index: 4;
+  width: min(32vw, 520px);
+  will-change: transform;
+}
+.wr-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--wf-plate);
+}
+.wr-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: inset(0 0 100% 0);
+}
+.wr-card__img.is-prev {
+  z-index: 1;
+  clip-path: inset(0);
+}
+.wr-card__img.is-current {
+  z-index: 2;
+  clip-path: inset(0);
+  transition: clip-path 0.7s var(--ease-expo);
+}
+/* "render" reveal: a signal-orange scan line leads the new picture down the card */
+.wr-card__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  animation: wr-scan 0.7s var(--ease-expo) forwards;
+}
+.wr-card__scan::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--signal);
+  box-shadow: 0 0 14px var(--signal);
+}
+@keyframes wr-scan {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+html.reduce .wr-card__scan {
+  display: none;
+}
+html.reduce .wr-card__img.is-current {
+  transition: none;
+}
+.wr-card__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(1.6rem, 3vw, 3rem);
+  color: var(--fg);
+}
+.wr-tick {
+  position: absolute;
+  z-index: 4;
+  width: 10px;
+  height: 10px;
+  border: 0 solid color-mix(in oklab, var(--fg) 60%, transparent);
+}
+.wr-tick--tl {
+  left: 8px;
+  top: 8px;
+  border-left-width: 1px;
+  border-top-width: 1px;
+}
+.wr-tick--tr {
+  right: 8px;
+  top: 8px;
+  border-right-width: 1px;
+  border-top-width: 1px;
+}
+.wr-tick--bl {
+  left: 8px;
+  bottom: 8px;
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+.wr-tick--br {
+  right: 8px;
+  bottom: 8px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+.wr-card__cap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+}
+.wr-card__go {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg);
+  transition: border-color 0.3s;
+}
+.wr-card__go:hover {
+  border-color: color-mix(in oklab, var(--fg) 50%, transparent);
+}
+@media (max-width: 767px) {
+  .wr-card,
+  .wr-tags {
+    display: none;
+  }
+}
+/* phones: the centred view switcher owns the bottom bar */
+@media (max-width: 639px) {
+  :is(.wf, .wr) .wf-hud > :first-child {
+    visibility: hidden;
   }
 }
