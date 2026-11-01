@@ -1,5 +1,7 @@
 "use client";
 
+import type { HeroFigure } from "./figure";
+
 /**
  * Registry between React and the WebGL engine. Components register the DOM
  * elements they want rendered as GL planes; the engine (loaded lazily) reads
@@ -47,20 +49,82 @@ export function onPlanes(listener: Listener) {
   };
 }
 
-/** Hero ink-field host element (one at a time). */
-let inkHost: HTMLElement | null = null;
-const inkListeners = new Set<(el: HTMLElement | null) => void>();
-export function setInkHost(el: HTMLElement | null) {
-  inkHost = el;
-  inkListeners.forEach((l) => l(el));
+/**
+ * Hero ink-field host (one at a time): the element whose text is printed in
+ * halftone. `domain` is the area the paint trail covers (the whole home stage,
+ * so the cursor paints the figure too); it defaults to the host itself.
+ */
+export interface InkHostSpec {
+  el: HTMLElement;
+  domain: HTMLElement;
+}
+let inkHost: InkHostSpec | null = null;
+const inkListeners = new Set<(spec: InkHostSpec | null) => void>();
+export function setInkHost(el: HTMLElement | null, opts: { domain?: HTMLElement | null } = {}) {
+  inkHost = el ? { el, domain: opts.domain ?? el } : null;
+  inkListeners.forEach((l) => l(inkHost));
 }
 export function getInkHost() {
   return inkHost;
 }
-export function onInkHost(l: (el: HTMLElement | null) => void) {
+export function onInkHost(l: (spec: InkHostSpec | null) => void) {
   inkListeners.add(l);
   return () => {
     inkListeners.delete(l);
+  };
+}
+
+/**
+ * The home stage (one at a time): the 3D scene of the figure on its ridge is
+ * drawn into this element's box. `figure` comes from the build-time check in
+ * lib/media.ts. Typed here so the page never imports the scene bundle.
+ */
+export interface SceneSpec {
+  el: HTMLElement;
+  figure: HeroFigure;
+}
+let sceneHost: SceneSpec | null = null;
+const sceneListeners = new Set<(spec: SceneSpec | null) => void>();
+export function setSceneHost(spec: SceneSpec | null) {
+  sceneHost = spec;
+  sceneListeners.forEach((l) => l(spec));
+}
+export function getSceneHost() {
+  return sceneHost;
+}
+export function onSceneHost(l: (spec: SceneSpec | null) => void) {
+  sceneListeners.add(l);
+  return () => {
+    sceneListeners.delete(l);
+  };
+}
+
+/**
+ * The /work field's camera, shared with the engine's dithered backdrop (one at a
+ * time). The field mutates this object every frame; the engine only reads it.
+ */
+export interface FieldBackdropState {
+  /** Camera position in CSS px. */
+  panX: number;
+  panY: number;
+  /** 0 at rest → 1 while the field is being thrown. */
+  moving: number;
+  /** 0 normal → 1 while a card is held or a picture is open. */
+  dim: number;
+}
+let fieldBackdrop: FieldBackdropState | null = null;
+const fieldListeners = new Set<(s: FieldBackdropState | null) => void>();
+export function setFieldBackdrop(s: FieldBackdropState | null) {
+  fieldBackdrop = s;
+  fieldListeners.forEach((l) => l(s));
+}
+export function getFieldBackdrop() {
+  return fieldBackdrop;
+}
+export function onFieldBackdrop(l: (s: FieldBackdropState | null) => void) {
+  fieldListeners.add(l);
+  return () => {
+    fieldListeners.delete(l);
   };
 }
 

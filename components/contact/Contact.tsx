@@ -5,7 +5,7 @@ import { site } from "@/content/site";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { SplitReveal } from "@/components/ui/SplitReveal";
 import { Icon } from "@/components/ui/Icon";
-import { CopyEmail } from "@/components/chrome/FooterBits";
+import { CopyEmail, LocalTime } from "@/components/chrome/FooterBits";
 import { chime, click } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +30,9 @@ function validate(f: FormState): Errors {
 }
 
 /**
- * Contact form — same EmailJS contract as v1 (fields user_name, user_email,
- * message, reply_to + the `phone` honeypot). EmailJS is loaded on submit.
+ * The /contact page body: the form (same EmailJS contract as v1: fields
+ * user_name, user_email, message, reply_to + the `phone` honeypot; EmailJS is
+ * loaded on submit), plus email, socials, availability, local time and résumé.
  */
 export function Contact() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -89,10 +90,10 @@ export function Contact() {
   const field = "peer w-full border-0 border-b border-fg/40 bg-transparent px-0 pb-3 pt-2 text-[clamp(1.1rem,1.6vw,1.45rem)] text-fg placeholder:text-muted focus:border-signal focus:outline-none focus:ring-0 transition-colors";
 
   return (
-    <section id="contact" aria-labelledby="contact-title" className="relative px-gutter py-[clamp(6rem,12vw,11rem)]">
+    <section id="message" aria-labelledby="contact-title" className="relative px-gutter pb-[clamp(6rem,12vw,11rem)] pt-[clamp(2.5rem,5vw,4.5rem)]">
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-3">
-          <SectionLabel index="06" title="Contact" />
+          <SectionLabel index="01" title="Message" />
         </div>
         <div className="col-span-12 lg:col-span-9">
           <SplitReveal as="h2" type="lines" id="contact-title" className="t-display text-huge">
@@ -122,6 +123,26 @@ export function Contact() {
               </li>
             ))}
           </ul>
+          <dl className="t-label grid grid-cols-[auto_1fr] gap-x-5 gap-y-2.5 border-t border-line pt-6 text-[11px]">
+            <dt className="text-muted">Status</dt>
+            <dd className="flex items-center gap-2 text-fg/90">
+              <span className="live-dot" /> {site.availability.label}
+            </dd>
+            <dt className="text-muted">Open to</dt>
+            <dd className="text-fg/90">{site.availability.detail}</dd>
+            <dt className="text-muted">Local time</dt>
+            <dd className="text-fg/90">
+              {site.location.label} · <LocalTime />
+            </dd>
+          </dl>
+          <a
+            href={site.resume}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="t-label inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-[11px] text-fg transition-colors hover:border-fg/50"
+          >
+            Résumé <Icon name="arrow-up-right" size={13} />
+          </a>
         </div>
 
         <form

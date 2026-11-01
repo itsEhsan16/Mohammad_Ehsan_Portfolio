@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { projects, statusLabel, getNextProject } from "@/content/projects";
 import { resolveProject } from "@/lib/media";
-import { jsonLd, projectJsonLd } from "@/lib/seo";
+import { jsonLd, pageMetadata, projectJsonLd } from "@/lib/seo";
 import { site } from "@/content/site";
 import { CaseBlocks } from "@/components/work/CaseBlocks";
 import { NextProject } from "@/components/work/NextProject";
@@ -23,13 +23,13 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
   if (!p) return {};
-  return {
+  return pageMetadata({
     title: `${p.title} — Case study`,
+    socialTitle: `${p.title} — ${site.name}`,
     description: p.summary,
-    alternates: { canonical: `/work/${p.slug}` },
-    openGraph: { type: "article", title: `${p.title} — ${site.name}`, description: p.summary, url: `${site.url}/work/${p.slug}` },
-    twitter: { title: `${p.title} — ${site.name}`, description: p.summary },
-  };
+    path: `/work/${p.slug}`,
+    type: "article",
+  });
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");

@@ -1,6 +1,41 @@
+import type { Metadata } from "next";
 import { site } from "@/content/site";
 import { capabilities } from "@/content/capabilities";
 import type { Project } from "@/content/types";
+
+/**
+ * Metadata for a page with its own link preview. A page that sets `openGraph`
+ * replaces the root object, so every field is filled in here. The page needs
+ * its own `opengraph-image` file too, or the preview loses its image.
+ */
+export function pageMetadata({
+  title,
+  description,
+  path,
+  socialTitle = `${title} — ${site.name}`,
+  type = "website",
+}: {
+  title: string;
+  description: string;
+  path: string;
+  socialTitle?: string;
+  type?: "website" | "article";
+}): Metadata {
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type,
+      title: socialTitle,
+      description,
+      url: `${site.url}${path}`,
+      siteName: `${site.name} — Portfolio`,
+      locale: "en_US",
+    },
+    twitter: { card: "summary_large_image", creator: site.twitterHandle, title: socialTitle, description },
+  };
+}
 
 /** Serialize JSON-LD safely for a <script> tag. */
 export function jsonLd(data: unknown) {

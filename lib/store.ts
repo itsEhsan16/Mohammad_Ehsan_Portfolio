@@ -15,6 +15,10 @@ export interface AppState {
   transitioning: boolean;
   /** WebGL engine is running. */
   gl: boolean;
+  /** A /work view fills the screen (no footer, no page scroll). */
+  field: boolean;
+  /** The macOS-style pointer is on (html.mac-cursor). */
+  macCursor: boolean;
 }
 
 const initial: AppState = {
@@ -25,6 +29,8 @@ const initial: AppState = {
   theme: "ink",
   transitioning: false,
   gl: false,
+  field: false,
+  macCursor: false,
 };
 
 let state: AppState = initial;

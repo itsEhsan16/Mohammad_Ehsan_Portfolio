@@ -1,23 +1,21 @@
 import { Hero } from "@/components/home/Hero";
-import { Manifesto } from "@/components/home/Manifesto";
+import { StageFallback } from "@/components/home/StageFallback";
+import { Intro } from "@/components/home/Intro";
 import { WorkReel } from "@/components/home/WorkReel";
-import { Capabilities } from "@/components/home/Capabilities";
-import { Services } from "@/components/home/Services";
-import { Experience } from "@/components/home/Experience";
-import { Contact } from "@/components/home/Contact";
-import { resolvedProjects } from "@/lib/media";
+import { Capabilities } from "@/components/services/Capabilities";
+import { Experience } from "@/components/about/Experience";
+import { heroFigure, resolvedProjects } from "@/lib/media";
 
 export default function Home() {
   const projects = resolvedProjects();
+  const figure = heroFigure();
   return (
     <main id="main" tabIndex={-1} className="outline-none">
-      <Hero />
-      <Manifesto />
+      <Hero figure={figure} fallback={<StageFallback still={figure.still} />} />
+      <Intro />
       <WorkReel projects={projects} />
-      <Capabilities />
-      <Services />
-      <Experience />
-      <Contact />
+      <Capabilities index="03" />
+      <Experience index="04" />
     </main>
   );
 }

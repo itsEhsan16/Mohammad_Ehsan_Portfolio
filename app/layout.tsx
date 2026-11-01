@@ -4,6 +4,7 @@ import { site } from "@/content/site";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { RouteWatcher } from "@/components/transition/RouteWatcher";
 import { Hud } from "@/components/chrome/Hud";
+import { DynamicBar } from "@/components/chrome/DynamicBar";
 import { Header } from "@/components/chrome/Header";
 import { MobileMenu } from "@/components/chrome/MobileMenu";
 import { Cursor } from "@/components/chrome/Cursor";
@@ -50,10 +51,11 @@ export const viewport: Viewport = {
 
 /**
  * Runs before first paint (from the server layout): theme, motion preference,
- * WebGL policy, preloader gating and scroll restoration. Test flags:
- * ?gl=force|0, ?boot=1|0.
+ * WebGL policy, the macOS-style cursor, preloader gating, the /work view and
+ * scroll restoration. Test
+ * flags: ?gl=force|0, ?boot=1|0, ?view=grid|list|wheel, ?cursor=mac|system.
  */
-const BOOT = `(function(){var d=document.documentElement,q=new URLSearchParams(location.search);d.classList.add('js');try{var t=localStorage.getItem('me:theme');d.dataset.theme=t==='paper'?'paper':'ink';var m=localStorage.getItem('me:motion');var rm=m==='reduce'||(m!=='full'&&matchMedia('(prefers-reduced-motion: reduce)').matches);if(rm)d.classList.add('reduce');var fine=matchMedia('(pointer: fine) and (hover: hover)').matches,fc=matchMedia('(forced-colors: active)').matches,g=q.get('gl'),sd=navigator.connection&&navigator.connection.saveData;if(g!=='force'&&(g==='0'||rm||fc||!fine||sd))d.classList.add('no-gl');var bot=navigator.webdriver||/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent);var b=q.get('boot');d.dataset.boot=b==='1'?'run':(b==='0'||bot||sessionStorage.getItem('me:booted'))?'skip':rm?'fade':'run';history.scrollRestoration='manual';}catch(e){d.dataset.boot='skip';}})();`;
+const BOOT = `(function(){var d=document.documentElement,q=new URLSearchParams(location.search);d.classList.add('js');try{var t=localStorage.getItem('me:theme');d.dataset.theme=t==='paper'?'paper':'ink';var m=localStorage.getItem('me:motion');var rm=m==='reduce'||(m!=='full'&&matchMedia('(prefers-reduced-motion: reduce)').matches);if(rm)d.classList.add('reduce');var fine=matchMedia('(pointer: fine) and (hover: hover)').matches,fc=matchMedia('(forced-colors: active)').matches,g=q.get('gl'),sd=navigator.connection&&navigator.connection.saveData;if(g!=='force'&&(g==='0'||rm||fc||!fine||sd))d.classList.add('no-gl');var cq=q.get('cursor');if(fine&&!fc&&cq!=='system'&&(cq==='mac'||localStorage.getItem('me:cursor')!=='system'))d.classList.add('mac-cursor');var bot=navigator.webdriver||/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent);var b=q.get('boot');d.dataset.boot=b==='1'?'run':(b==='0'||bot||sessionStorage.getItem('me:booted'))?'skip':rm?'fade':'run';var wv=q.get('view')||localStorage.getItem('me:workview');wv=wv==='field'?'grid':wv==='index'?'list':wv;d.dataset.workview=/^(grid|list|wheel)$/.test(wv||'')?wv:(rm||bot)?'list':'grid';history.scrollRestoration='manual';}catch(e){d.dataset.boot='skip';}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -74,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <RouteWatcher />
           <GLCanvas />
           <Hud />
+          <DynamicBar />
           <Header />
           <MobileMenu />
           {children}

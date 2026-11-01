@@ -5,7 +5,8 @@ import { SplitReveal } from "@/components/ui/SplitReveal";
 import { SectionLabel, Chip } from "@/components/ui/SectionLabel";
 import { Stamp } from "@/components/about/Stamp";
 import { Telemetry } from "@/components/about/Telemetry";
-import { Experience } from "@/components/home/Experience";
+import { Experience } from "@/components/about/Experience";
+import { Manifesto } from "@/components/ui/Manifesto";
 import { Icon } from "@/components/ui/Icon";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { TransitionLink } from "@/components/transition/TransitionLink";
@@ -36,9 +37,7 @@ export default function AboutPage() {
           </div>
         </div>
         <div className="col-span-12 md:col-span-7 lg:col-span-7 lg:col-start-6">
-          <SplitReveal as="p" type="lines" trigger="load" className="text-[clamp(1.6rem,3vw,3rem)] font-medium leading-[1.1] tracking-[-0.025em]">
-            {site.about.intro}
-          </SplitReveal>
+          <Manifesto />
           <div className="mt-10 max-w-[60ch] space-y-5 text-[17px] leading-relaxed text-fg/85">
             {site.about.story.map((p, i) => (
               <p key={i}>{p}</p>

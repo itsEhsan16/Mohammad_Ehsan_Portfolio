@@ -9,7 +9,8 @@ import { Icon } from "@/components/ui/Icon";
 import { LocalTime } from "@/components/chrome/FooterBits";
 import { gsap, useGSAP, motionOK } from "@/lib/motion/gsap";
 import { whenVisible } from "@/lib/transition";
-import { setInkHost } from "@/lib/gl/registry";
+import { setInkHost, setSceneHost } from "@/lib/gl/registry";
+import type { HeroFigure } from "@/lib/gl/figure";
 import { scrollTo } from "@/lib/motion/lenis";
 
 /** Fit each name line to the available width (runs after fonts load and on resize). */
@@ -38,14 +39,27 @@ function useFitLines(container: React.RefObject<HTMLElement | null>) {
   }, [container]);
 }
 
-export function Hero() {
+/**
+ * The home hero: your name as a giant halftone you paint with the cursor. On
+ * desktop WebGL a dithered ridge sits behind it, and your model stands on it
+ * once public/media/hero/me.glb exists (lib/gl/scene.ts). Without WebGL,
+ * `fallback` draws the same ridge as a dot screen.
+ */
+export function Hero({ figure, fallback }: { figure: HeroFigure; fallback: React.ReactNode }) {
   const root = useRef<HTMLElement>(null);
   const name = useRef<HTMLSpanElement>(null);
   useFitLines(name);
 
+  // the paint trail spans the whole hero, so the cursor reaches the ground (and the figure)
+  const figureRef = useRef(figure);
   useEffect(() => {
-    setInkHost(name.current);
-    return () => setInkHost(null);
+    const hero = root.current;
+    setInkHost(name.current, { domain: hero });
+    setSceneHost(hero ? { el: hero, figure: figureRef.current } : null);
+    return () => {
+      setSceneHost(null);
+      setInkHost(null);
+    };
   }, []);
 
   // The giant name is never hidden (it's the LCP candidate). The intro animates the
@@ -67,9 +81,11 @@ export function Hero() {
       ref={root}
       id="index"
       aria-label="Introduction"
-      className="relative flex min-h-[100svh] flex-col justify-between px-gutter pb-6 pt-[calc(var(--hud-h)+5rem)]"
+      data-cursor="drag"
+      className="relative isolate flex min-h-[100svh] flex-col justify-between px-gutter pb-6 pt-[calc(var(--hud-h)+5rem)]"
     >
       <div aria-hidden="true" className="guides pointer-events-none absolute inset-0 -z-10" />
+      {fallback}
 
       <div className="flex items-start justify-between gap-6" data-hero-fade>
         <SectionLabel index="01" title="Index" />
@@ -96,18 +112,18 @@ export function Hero() {
           </span>
         </h1>
         <p
-          className="absolute bottom-[calc(3vh+0.6vw)] left-0 hidden max-w-[30ch] text-[clamp(1.05rem,1.45vw,1.5rem)] leading-snug text-fg/90 md:block"
+          className="absolute bottom-[calc(3vh+0.6vw)] left-0 -ml-2.5 hidden max-w-[32ch] rounded-[4px] bg-bg px-2.5 py-1.5 text-[clamp(1.05rem,1.45vw,1.5rem)] leading-snug text-fg/90 md:block"
           data-hero-fade
         >
           <Rich text={site.hero.subline} />
         </p>
-        <p className="mt-6 text-lg leading-snug text-fg/90 md:hidden" data-hero-fade>
+        <p className="-mx-2 mt-6 w-fit rounded-[4px] bg-bg px-2 py-1 text-lg leading-snug text-fg/90 md:hidden" data-hero-fade>
           <Rich text={site.hero.subline} />
         </p>
       </div>
 
       <div className="grid grid-cols-2 items-end gap-4 md:grid-cols-12" data-hero-fade>
-        <div className="t-label col-span-1 space-y-1 text-muted md:col-span-4">
+        <div className="t-label col-span-1 -ml-2.5 w-fit space-y-1 rounded-[4px] bg-bg px-2.5 py-2 text-muted md:col-span-4">
           <p className="flex items-center gap-2 text-fg/85">
             <span className="live-dot" /> {site.availability.label}
           </p>
@@ -115,10 +131,10 @@ export function Hero() {
             {site.location.label} · <LocalTime />
           </p>
         </div>
-        <p className="t-label col-span-1 hidden text-muted md:col-span-4 md:block">
+        <p className="t-label col-span-1 hidden w-fit rounded-[4px] bg-bg px-2.5 py-2 text-muted md:col-span-4 md:block">
           Move your cursor over the name
           <br />
-          to render it. Click for ripples.
+          to render it. Drag to look around.
         </p>
         <div className="col-span-1 flex items-center justify-end gap-3 md:col-span-4">
           <Magnetic>
@@ -134,7 +150,7 @@ export function Hero() {
           <button
             type="button"
             onClick={() => scrollTo("#intro")}
-            className="t-label hidden h-11 w-11 place-items-center rounded-full border border-line text-fg sm:grid"
+            className="t-label hidden h-11 w-11 place-items-center rounded-full border border-line bg-bg text-fg sm:grid"
             aria-label="Scroll to introduction"
           >
             <Icon name="arrow-down" size={14} />

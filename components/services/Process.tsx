@@ -4,9 +4,6 @@ import { useRef } from "react";
 import { offerings, process, servicesIntro } from "@/content/services";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { SplitReveal } from "@/components/ui/SplitReveal";
-import { Magnetic } from "@/components/ui/Magnetic";
-import { Icon } from "@/components/ui/Icon";
-import { TransitionLink } from "@/components/transition/TransitionLink";
 import { gsap, useGSAP, motionOK } from "@/lib/motion/gsap";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +11,13 @@ const CARD_STYLES = [
   "bg-bone text-ink",
   "bg-orange text-ink",
   "bg-graphite text-bone border border-bone/15",
-  "bg-transparent text-fg border border-fg/40",
+  // the outlined card is filled with the page colour, so while the deck is stacked it covers the card under it
+  "bg-bg text-fg border border-fg/40",
 ];
 const TILT = [-7, 4, -3, 6];
 
-/** Freelance services: a deck of tilted process cards that fan out on scroll, plus offerings. No prices. */
-export function Services() {
+/** How a freelance build runs: a deck of tilted process cards that fan out on scroll, plus offerings. No prices. */
+export function Process() {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -63,16 +61,16 @@ export function Services() {
   );
 
   return (
-    <section ref={root} id="services" aria-labelledby="services-title" className="relative px-gutter py-[clamp(6rem,12vw,11rem)]">
+    <section ref={root} id="process" aria-labelledby="process-title" className="relative px-gutter pb-[clamp(6rem,12vw,11rem)] pt-[clamp(2.5rem,5vw,4.5rem)]">
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-3">
-          <SectionLabel index="04" title="Services" />
+          <SectionLabel index="01" title="Process" />
           <p className="t-label mt-3 flex items-center gap-2 text-muted">
             <span className="live-dot" /> Open for freelance
           </p>
         </div>
         <div className="col-span-12 lg:col-span-9">
-          <SplitReveal as="h2" type="lines" id="services-title" className="t-display text-huge">
+          <SplitReveal as="h2" type="lines" id="process-title" className="t-display text-huge">
             {servicesIntro.title} <span className="t-serif normal-case text-signal-text">{servicesIntro.accent}</span>
           </SplitReveal>
           <p className="mt-6 max-w-[56ch] text-[17px] leading-relaxed text-fg/85">{servicesIntro.body}</p>
@@ -119,17 +117,6 @@ export function Services() {
             </li>
           ))}
         </ul>
-        <div className="col-span-12 flex flex-wrap items-center gap-4 lg:col-span-9 lg:col-start-4">
-          <Magnetic>
-            <TransitionLink
-              href="/#contact"
-              className="t-label inline-flex items-center gap-3 rounded-full bg-signal px-6 py-4 text-[12px] font-semibold text-ink"
-            >
-              Start a project <Icon name="arrow-right" size={14} />
-            </TransitionLink>
-          </Magnetic>
-          <span className="t-label text-muted">Free intro call · scope &amp; timeline before anything starts</span>
-        </div>
       </div>
     </section>
   );

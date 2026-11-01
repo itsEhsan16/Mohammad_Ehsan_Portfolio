@@ -32,12 +32,12 @@ export function Footer() {
       </div>
 
       <div className="grid grid-cols-2 gap-x-6 gap-y-10 border-t border-line px-gutter py-10 md:grid-cols-12">
-        <div className="col-span-2 md:col-span-5">
+        <div className="col-span-2 md:col-span-5" data-footer-cta>
           <p className="t-label mb-3 text-muted">Start a project</p>
           <CopyEmail />
           <div className="mt-5 flex flex-wrap gap-2">
             <TransitionLink
-              href="/#contact"
+              href="/contact"
               className="t-label inline-flex items-center gap-2 rounded-full bg-fg px-4 py-2.5 text-[11px] text-bg transition-transform hover:-translate-y-0.5"
             >
               Write a message <Icon name="arrow-right" size={13} />

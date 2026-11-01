@@ -48,14 +48,14 @@ export const site = {
   nav: [
     { label: "Work", href: "/work" },
     { label: "About", href: "/about" },
-    { label: "Services", href: "/#services" },
-    { label: "Contact", href: "/#contact" },
+    { label: "Services", href: "/services" },
+    { label: "Contact", href: "/contact" },
   ],
   about: {
     intro:
       "Building digital experiences that combine creativity with technical excellence. Focused on creating intuitive, high-performance applications.",
     story: [
-      "I'm a software engineer and front-end developer from India. I care about the moment an interface stops feeling like software and starts feeling inevitable — fast, accessible, and quietly delightful.",
+      "I care about the moment an interface stops feeling like software and starts feeling inevitable — fast, accessible, and quietly delightful.",
       "My day-to-day is React, Next.js and TypeScript on the front, with Node.js, Express, Firebase and Supabase behind it. I design in Figma when a project needs it, and I like owning the whole path from first sketch to the last line of code.",
       "I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.",
     ],

@@ -62,7 +62,7 @@ Adding a loop has a trade-off: that project loses the WebGL blueprint effect and
 |---|---|---|
 | 8 | `public/media/work/adaptive-learning/shot-1.webp` … `shot-4.webp` (+ `loop.mp4`) | At 1440×900: the home screen, a learning path, the schedule, and progress tracking. Plus a 10 s screen recording scrolling through a flow, cropped to 16:10. |
 | 9 | `public/media/work/task-management-app/shot-1.webp` … `shot-3.webp` | The task board, a task with subtasks, and the sign-in screen (run the app locally) |
-| 10 | `public/media/work/personal-portfolio/shot-*.webp` | Screens of this site (hero, reel, a case study) |
+| 10 | `public/media/work/personal-portfolio/shot-*.webp` | Screens of this site (the hero, the /work field, the paper theme, /services) |
 
 If you'd rather have the agent capture item 8 automatically, add `aiadaptivelearning.netlify.app` to the cloud environment's **Allowed domains**.
 

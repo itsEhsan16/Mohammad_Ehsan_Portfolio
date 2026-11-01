@@ -5,6 +5,7 @@ import { gsap, finePointer, motionOK } from "@/lib/motion/gsap";
 import { setState } from "@/lib/store";
 import { site } from "@/content/site";
 import { tick, click } from "@/lib/audio";
+import { setDragging } from "@/lib/cursor";
 
 type StickerDef = {
   id: string;
@@ -39,7 +40,8 @@ const STICKERS: StickerDef[] = [
   },
   {
     id: "base",
-    label: site.location.label,
+    // the accessible name has to contain the words you can see on the sticker
+    label: `Based in ${site.location.country} · ${site.location.tzLabel} · +05:30`,
     style: { left: "8%", bottom: "16%" },
     rotate: -5,
     className: "grid h-28 w-28 place-items-center rounded-full border-2 border-dashed border-ink/70 bg-bone text-ink",
@@ -79,7 +81,7 @@ const STICKERS: StickerDef[] = [
   },
   {
     id: "cmdk",
-    label: "Open command menu",
+    label: "⌘K — open the command menu",
     style: { right: "18%", bottom: "30%" },
     rotate: -11,
     className:
@@ -122,12 +124,17 @@ export function Stickers() {
           bounds: root,
           inertia: true,
           zIndexBoost: false,
+          // the stylesheet owns the cursor (open hand, closed hand while dragging): at runtime `false`
+          // tells Draggable to set no inline cursor at all, though its types only admit strings
+          cursor: false as unknown as string,
           onPress() {
+            setDragging(true);
             (this.target as HTMLElement).style.zIndex = String(++z);
             gsap.to(this.target, { scale: 1.08, duration: 0.3, ease: "spring" });
             tick();
           },
           onRelease() {
+            setDragging(false);
             gsap.to(this.target, { scale: 1, duration: 0.5, ease: "spring" });
           },
           onClick() {
@@ -163,6 +170,7 @@ export function Stickers() {
       cancelled = true;
       io.disconnect();
       draggables.forEach((d) => d.kill());
+      setDragging(false);
       holos.forEach((h) => h.removeEventListener("pointermove", shine));
     };
   }, []);

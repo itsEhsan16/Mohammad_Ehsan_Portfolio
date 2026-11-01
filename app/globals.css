@@ -79,7 +79,10 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
-    scrollbar-gutter: stable;
+    /* Keeps body's clip on body. Without this, body's overflow passes up to the
+       viewport. Phones then widen the page for content that sticks out (tilted
+       cards, the stamp's ring), which pushes fixed UI past the right edge. */
+    overflow-x: clip;
   }
   body {
     font-family: var(--font-sans);
@@ -204,14 +207,153 @@ html:not(.reduce) .grain {
   100% { transform: translate(0, 0); }
 }
 
-/* custom cursor hides the native one only where it is active */
-html.has-cursor,
-html.has-cursor * {
+/*
+ * macOS-style pointer (public/cursors, black with a signal-orange outline), as native image cursors so the
+ * pointer itself never lags. On for mouse/trackpad users unless they chose the system cursor (⌘K).
+ * Every selector below is html.mac-cursor + :where(…) — the same specificity — so order decides.
+ * Literal values, never var(): an unsupported declaration must be dropped at parse time so the one before applies.
+ * The 1x/@2x pair keeps Safari sharp on Retina; hotspots are css px of the 1x file (lib/cursor.ts lists them).
+ */
+/* 1 · I-beam over text blocks (not inside links, buttons, drag/paint areas or unselectable UI) and in fields */
+html.mac-cursor
+  :where(p, h1, h2, h3, h4, h5, h6, dt, dd, blockquote, figcaption, pre, code, td, th, caption, li:not(:has(> :not(span, em, strong, b, i, small, code, br, svg)))):not(:where(a[href], area[href], button, summary, [role="button"], [role="link"], .cursor-pointer, [data-cursor], .select-none, .wf, .wr, .dbar, .preloader, [role="img"]) *):not(:where(.select-none)),
+html.mac-cursor
+  :where(input:not([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"], [type="hidden"]), textarea, [contenteditable]:not([contenteditable="false"])) {
+  cursor: url("/cursors/ibeam.svg") 5 11, text;
+  cursor: -webkit-image-set(url("/cursors/ibeam.svg") 1x, url("/cursors/ibeam@2x.svg") 2x) 5 11, text;
+  cursor: image-set(url("/cursors/ibeam.svg") 1x, url("/cursors/ibeam@2x.svg") 2x) 5 11, text;
+}
+/* 2 · hand on anything clickable (descendants inherit it) */
+html.mac-cursor
+  :where(a[href], area[href], button, summary, select, [role="button"], [role="link"], [role="slider"], input:is([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"]), .cursor-pointer),
+html.mac-cursor :where(.wf).is-over {
+  cursor: url("/cursors/hand.svg") 8 2, pointer;
+  cursor: -webkit-image-set(url("/cursors/hand.svg") 1x, url("/cursors/hand@2x.svg") 2x) 8 2, pointer;
+  cursor: image-set(url("/cursors/hand.svg") 1x, url("/cursors/hand@2x.svg") 2x) 8 2, pointer;
+}
+/* 3 · open hand on things you drag */
+html.mac-cursor :where(.wf, [data-cursor="drag"]) {
+  cursor: url("/cursors/grab.svg") 12 11, grab;
+  cursor: -webkit-image-set(url("/cursors/grab.svg") 1x, url("/cursors/grab@2x.svg") 2x) 12 11, grab;
+  cursor: image-set(url("/cursors/grab.svg") 1x, url("/cursors/grab@2x.svg") 2x) 12 11, grab;
+}
+/* 4 · copy */
+html.mac-cursor :where([data-cursor="copy"]) {
+  cursor: url("/cursors/copy.svg") 3 2, copy;
+  cursor: -webkit-image-set(url("/cursors/copy.svg") 1x, url("/cursors/copy@2x.svg") 2x) 3 2, copy;
+  cursor: image-set(url("/cursors/copy.svg") 1x, url("/cursors/copy@2x.svg") 2x) 3 2, copy;
+}
+/* 5 · crosshair where the hero name can be painted (only when WebGL is drawing it) */
+html.mac-cursor.gl-ready :where([data-cursor="paint"]) {
+  cursor: url("/cursors/crosshair.svg") 11 11, crosshair;
+  cursor: -webkit-image-set(url("/cursors/crosshair.svg") 1x, url("/cursors/crosshair@2x.svg") 2x) 11 11, crosshair;
+  cursor: image-set(url("/cursors/crosshair.svg") 1x, url("/cursors/crosshair@2x.svg") 2x) 11 11, crosshair;
+}
+/* 6 · arrow: the page itself, plus things that must not look clickable */
+html.mac-cursor,
+html.mac-cursor :where(label, option, optgroup, :disabled, [aria-disabled="true"], .cursor-default, .wf-hud, .wf-lbox, .wr) {
+  cursor: url("/cursors/arrow.svg") 3 2, default;
+  cursor: -webkit-image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
+  cursor: image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, default;
+}
+/* dragging something (the home stage, a sticker, the scrollbar) never selects text */
+html.cursor-dragging,
+html.cursor-dragging * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* 7 · page-wide states, which beat inline styles and whatever is under the pointer */
+html.mac-cursor.cursor-dragging,
+html.mac-cursor.cursor-dragging * {
+  cursor: url("/cursors/grabbing.svg") 12 10, grabbing !important;
+  cursor: -webkit-image-set(url("/cursors/grabbing.svg") 1x, url("/cursors/grabbing@2x.svg") 2x) 12 10, grabbing !important;
+  cursor: image-set(url("/cursors/grabbing.svg") 1x, url("/cursors/grabbing@2x.svg") 2x) 12 10, grabbing !important;
+}
+html.mac-cursor.cursor-busy,
+html.mac-cursor.cursor-busy * {
+  cursor: url("/cursors/arrow.svg") 3 2, progress !important;
+  cursor: -webkit-image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, progress !important;
+  cursor: image-set(url("/cursors/arrow.svg") 1x, url("/cursors/arrow@2x.svg") 2x) 3 2, progress !important;
+}
+html.mac-cursor.cursor-shake,
+html.mac-cursor.cursor-shake * {
   cursor: none !important;
 }
-html.has-cursor input,
-html.has-cursor textarea {
-  cursor: text !important;
+
+/* the words beside the pointer (View, Open, Click to open…) */
+.cur-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 210;
+  padding: 5px 7px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--fg);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s;
+  will-change: transform;
+}
+.cur-tip.is-on {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .cur-tip {
+    display: none;
+  }
+}
+/* busy: a small spinning rainbow pinwheel beside the arrow while a page is changing */
+.cur-wheel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 211;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.65), transparent 45%),
+    conic-gradient(#ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #0a84ff, #5e5ce6, #bf5af2, #ff3b30);
+  box-shadow:
+    0 0 0 1px rgb(11 11 10 / 0.7),
+    0 1px 2px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  will-change: transform;
+}
+.cur-wheel.is-on {
+  opacity: 1;
+  transition-delay: 0.12s;
+}
+html:not(.reduce) .cur-wheel.is-on {
+  animation: cur-spin 0.9s linear infinite;
+}
+@keyframes cur-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+/* shake to find: a big copy of the arrow, anchored at its hotspot */
+.cur-big {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 220;
+  width: 20px;
+  height: 26px;
+  transform-origin: 3px 2px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* preloader: hidden unless the pre-paint script asks for it (no-JS never sees it), with a failsafe */
@@ -319,6 +461,19 @@ html:not(.reduce) .live-dot {
   }
 }
 
+/* Manifesto words light up as you scroll (--lit, 0 to 1). Unread words dim only
+   to the faintest level that still passes large-text contrast (3:1). Dark text
+   on the light paper ground needs more than bone on ink. */
+.manifesto {
+  --dim: 0.37;
+}
+[data-theme="paper"] .manifesto {
+  --dim: 0.45;
+}
+.manifesto .manifesto-word {
+  opacity: calc(var(--dim) + (1 - var(--dim)) * var(--lit, 1));
+}
+
 /* manifesto highlight underline (scrubbed via --mark) */
 .manifesto .is-mark {
   position: relative;
@@ -334,6 +489,20 @@ html:not(.reduce) .live-dot {
   background: var(--signal);
   transform-origin: left center;
   transform: scaleX(var(--mark));
+}
+
+/* home stage: the server-drawn ground (dot screen masked by the skyline) */
+.stage-dots {
+  background-image: radial-gradient(circle, currentColor 0.8px, transparent 1px);
+  background-size: 3px 3px;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+/* /contact already is the call to action, so the footer drops its own */
+[data-footer-route="contact"] [data-footer-cta] {
+  display: none;
 }
 
 /* selected-work reel: sticky horizontal track on desktop with motion, stacked otherwise */
@@ -393,43 +562,6 @@ html:not(.reduce) .live-dot {
   }
 }
 
-/* work index list */
-.work-row {
-  transition: opacity 0.4s;
-}
-@media (hover: hover) {
-  .work-list:hover .work-row {
-    opacity: 0.35;
-  }
-  .work-list li[data-active] .work-row {
-    opacity: 1;
-  }
-}
-.work-title {
-  transition: color 0.3s;
-}
-.work-list li[data-active] .work-title {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-stretch: 100%;
-  text-transform: none;
-  letter-spacing: -0.02em;
-  color: var(--signal-text);
-}
-.work-arrow {
-  transition:
-    transform 0.6s var(--ease-expo),
-    background-color 0.3s,
-    color 0.3s;
-}
-.work-list li[data-active] .work-arrow {
-  transform: rotate(45deg);
-  background: var(--signal);
-  color: #0b0b0a;
-  border-color: transparent;
-}
-
 /* next-project zone: sticky scroll-to-advance on desktop with motion */
 @media (min-width: 1024px) and (pointer: fine) {
   html.js:not(.reduce) .next-zone {
@@ -472,4 +604,1267 @@ html.gl-ready [data-gl-plane]:has(.gl-media[data-gl-on="1"]) {
 /* during a shared-element morph the incoming page waits until the plane lands */
 html[data-morphing] #main {
   opacity: 0;
+}
+
+/* ───────────────────────── /work field ───────────────────────── */
+/*
+ * The server renders a plain list of projects (.work-static): the page without JS and for crawlers.
+ * With JS a full-screen view (LIST / WHEEL / GRID) takes over; until it mounts the list stays hidden
+ * (failsafe after 4 s), and afterwards it lives on as a keyboard list that appears when focused.
+ */
+html[data-workview]:not([data-workui]) .work-static {
+  visibility: hidden;
+  animation: reveal-failsafe 0s linear 4s forwards;
+}
+html[data-workui] {
+  overflow: hidden;
+}
+html[data-workui] .work-static {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-workui] .work-static:has(nav :focus) {
+  left: var(--gutter);
+  bottom: 60px;
+  z-index: 50;
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: 14px 16px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+html[data-workui] .work-static:has(nav :focus) > :not(nav),
+html[data-workui] .work-static:has(nav :focus) .work-static__meta {
+  display: none;
+}
+.work-static__hint {
+  display: none;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__hint {
+  display: block;
+  margin-bottom: 10px;
+}
+html[data-workui] .work-static:has(nav :focus) nav {
+  margin: 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__list {
+  border: 0;
+}
+html[data-workui] .work-static:has(nav :focus) li {
+  border: 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__link {
+  gap: 10px;
+  padding: 4px 0;
+}
+html[data-workui] .work-static:has(nav :focus) .work-static__title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 450;
+  font-stretch: 100%;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+/* LIST · WHEEL · GRID */
+.view-switch {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  z-index: 45;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transform: translateX(-50%);
+  transition:
+    opacity 0.3s,
+    transform 0.5s var(--ease-expo);
+}
+html[data-lightbox] .view-switch {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 14px);
+}
+.view-switch__pill {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background: var(--fg);
+}
+.view-switch.is-ready .view-switch__pill {
+  transition:
+    transform 0.55s var(--ease-expo),
+    width 0.55s var(--ease-expo);
+}
+.view-switch__btn {
+  position: relative;
+  z-index: 1;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+.view-switch__btn:hover {
+  color: var(--fg);
+}
+.view-switch__btn.is-on {
+  color: var(--bg);
+}
+
+/* views fade out before another takes over */
+.wf.is-leaving,
+.wr.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+/* shared by the grid (.wf) and the list/wheel (.wr): the plate colour and the CRT glass */
+:is(.wf, .wr) {
+  --wf-plate: #141413;
+  --crt-line: rgb(0 0 0 / 0.3);
+  --crt-vig: rgb(0 0 0 / 0.8);
+}
+[data-theme="paper"] :is(.wf, .wr) {
+  --wf-plate: #e0dcd3;
+  --crt-line: rgb(40 30 10 / 0.07);
+  --crt-vig: rgb(60 48 24 / 0.3);
+}
+.wf {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  outline: none;
+}
+html:not(.mac-cursor) .wf {
+  cursor: grab;
+}
+html:not(.mac-cursor) .wf.is-dragging {
+  cursor: grabbing;
+}
+.wf:focus-visible::after,
+.wr:focus-visible::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--hud-h) + 64px) var(--gutter) 52px;
+  border: 1px dashed color-mix(in oklab, var(--signal) 75%, transparent);
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* dithered ground without WebGL (the engine draws a live one when it runs) */
+.wf-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--fg) 11%, transparent) 0.9px, transparent 1.3px);
+  background-size: 4px 4px;
+  -webkit-mask-image: radial-gradient(140% 110% at 50% 100%, #000 5%, transparent 72%);
+  mask-image: radial-gradient(140% 110% at 50% 100%, #000 5%, transparent 72%);
+}
+html.gl-ready .wf-bg {
+  display: none;
+}
+
+/* the tube: a grade over the field, scan lines and a vignette on top */
+.wf-stage {
+  position: absolute;
+  inset: 0;
+  filter: contrast(1.12) saturate(1.1);
+}
+.wf-world {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wf-world.is-split {
+  filter: url(#wf-ab);
+}
+.wf-crt {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, var(--crt-line) 0 1px, transparent 1px 3px),
+    radial-gradient(125% 95% at 50% 48%, transparent 50%, var(--crt-vig) 100%);
+}
+html:not(.reduce) .wf-crt::after {
+  content: "";
+  position: absolute;
+  inset: -25% 0 auto;
+  height: 25%;
+  background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.025) 50%, transparent);
+  animation: wf-roll 9s linear infinite;
+}
+@keyframes wf-roll {
+  to {
+    transform: translateY(500%);
+  }
+}
+
+/* cells */
+.wf-cell {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: calc(var(--ph) + var(--lh));
+  transform-origin: 0 0;
+  will-change: transform;
+  transition: opacity 1.1s var(--ease-expo);
+}
+.wf-arrive {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ph);
+}
+.wf-arrive.is-waiting {
+  transform: scaleY(0.07);
+  filter: blur(15px);
+}
+.wf-arrive.is-arriving {
+  transition:
+    transform 0.86s cubic-bezier(0.2, 0.75, 0.12, 1),
+    filter 0.86s cubic-bezier(0.2, 0.75, 0.12, 1);
+  will-change: transform, filter;
+}
+.wf-plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--wf-plate);
+  border-radius: var(--wf-r, 0px);
+}
+.wf-frame {
+  position: absolute;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--wf-plate) 70%, #000);
+}
+.wf-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* the blueprint copy: the same picture, grey, screened and ruled — cross-faded by distance from the middle */
+.wf-blue {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  will-change: opacity;
+}
+.wf-blue .wf-img {
+  filter: grayscale(1) contrast(1.45) brightness(0.7);
+}
+.wf-blue::before,
+.wf-blue::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.wf-blue::before {
+  background: radial-gradient(circle, transparent 0 0.75px, var(--wf-plate) 1.3px) 0 0 / 3px 3px;
+}
+.wf-blue::after {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--fg) 13%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--fg) 13%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.wf-cell.is-focus .wf-blue {
+  opacity: 0 !important;
+  transition: opacity 0.7s var(--ease-expo);
+}
+
+/* corner marks and microtype */
+.wf-tick {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border: 0 solid color-mix(in oklab, var(--fg) 55%, transparent);
+  transition:
+    width 0.5s var(--ease-expo),
+    height 0.5s var(--ease-expo),
+    border-color 0.3s,
+    margin 0.5s var(--ease-expo);
+}
+.wf-tick--tl {
+  left: -7px;
+  top: -7px;
+  border-left-width: 1px;
+  border-top-width: 1px;
+}
+.wf-tick--tr {
+  right: -7px;
+  top: -7px;
+  border-right-width: 1px;
+  border-top-width: 1px;
+}
+.wf-tick--bl {
+  left: -7px;
+  top: calc(var(--ph) + 2px);
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+.wf-tick--br {
+  right: -7px;
+  top: calc(var(--ph) + 2px);
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+.wf-cell.is-focus .wf-tick {
+  width: 16px;
+  height: 16px;
+  border-color: var(--signal);
+}
+.wf-cell.is-focus .wf-tick--tl,
+.wf-cell.is-focus .wf-tick--tr {
+  margin-top: -4px;
+}
+.wf-cell.is-focus .wf-tick--bl,
+.wf-cell.is-focus .wf-tick--br {
+  margin-top: -7px;
+}
+.wf-cell.is-focus .wf-tick--tl,
+.wf-cell.is-focus .wf-tick--bl {
+  margin-left: -4px;
+}
+.wf-cell.is-focus .wf-tick--tr,
+.wf-cell.is-focus .wf-tick--br {
+  margin-right: -4px;
+}
+.wf-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--ph) + var(--fs) * 0.9);
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5em;
+  font-family: var(--font-mono);
+  font-size: var(--fs);
+  font-weight: 450;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+  transition: color 0.4s;
+}
+.wf-meta span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf-meta span:first-child::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0.62em;
+  margin-right: 0;
+  background: var(--signal);
+  transition:
+    width 0.4s var(--ease-expo),
+    margin 0.4s var(--ease-expo);
+}
+.wf-cell.is-focus .wf-meta {
+  color: var(--fg);
+}
+.wf-cell.is-focus .wf-meta span:first-child::before {
+  width: 0.62em;
+  margin-right: 0.7em;
+}
+
+/* type-only tiles */
+.wf-sheet {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4.6cqw 5.2cqw;
+  color: var(--fg);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 6cqw 6cqw;
+}
+.wf-sheet__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 3cqw;
+  font-family: var(--font-mono);
+  font-size: 2.5cqw;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.wf-sheet__row span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf-sheet__title {
+  font-family: var(--font-display);
+  font-weight: 860;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  line-height: 0.84;
+  font-size: 12.5cqw;
+  background-image: radial-gradient(circle, var(--fg) 0.34cqw, transparent 0.44cqw);
+  background-size: 1.05cqw 1.05cqw;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.wf-sheet__tag {
+  margin-top: 1.8cqw;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 4cqw;
+  line-height: 1.15;
+  color: color-mix(in oklab, var(--fg) 82%, transparent);
+}
+.wf-sheet__tag::before {
+  content: "";
+  display: inline-block;
+  width: 6cqw;
+  height: 0.55cqw;
+  margin-right: 1.6cqw;
+  vertical-align: middle;
+  background: var(--signal);
+}
+.wf-sheet__sum {
+  max-width: 72%;
+  margin-top: 2.2cqw;
+  font-size: 1.9cqw;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--fg) 78%, transparent);
+}
+.wf-sheet--big .wf-sheet__title {
+  font-size: 10.5cqw;
+}
+.wf-sheet--big .wf-sheet__row {
+  font-size: 1.5cqw;
+}
+.wf-sheet--big .wf-sheet__tag {
+  font-size: 3cqw;
+}
+
+/* middle-of-the-screen crosshair */
+.wf-reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -14px 0 0 -14px;
+  z-index: 6;
+  pointer-events: none;
+  color: #fff;
+  mix-blend-mode: difference;
+  opacity: 0.8;
+}
+
+/* bottom bar */
+.wf-hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 46px;
+  padding: 0 var(--gutter);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: linear-gradient(to top, color-mix(in oklab, var(--bg) 88%, transparent), transparent);
+}
+html:not(.mac-cursor) .wf-hud {
+  cursor: auto;
+}
+.wf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 28px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--fg);
+  background: color-mix(in oklab, var(--bg) 60%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.3s;
+}
+.wf-chip:hover {
+  border-color: color-mix(in oklab, var(--fg) 50%, transparent);
+}
+
+/* the field's "Click to open" words share the tooltip look (.cur-tip) and live inside the field */
+.wf-label {
+  z-index: 48;
+}
+
+/* the open picture */
+.wf-lbox {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  visibility: hidden;
+  pointer-events: none;
+}
+.wf-lbox.is-open,
+.wf-lbox.is-flying {
+  visibility: visible;
+}
+.wf-lbox.is-open {
+  pointer-events: auto;
+}
+.wf-lbox__veil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--bg) 80%, transparent);
+  opacity: 0;
+  transition: opacity 0.45s;
+}
+.wf-lbox.is-open .wf-lbox__veil {
+  opacity: 1;
+}
+.wf-lbox__box {
+  position: absolute;
+  transform-origin: 0 0;
+  background: var(--wf-plate);
+  will-change: transform;
+}
+.wf-lbox__lo,
+.wf-lbox__hi {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.wf-lbox__hi {
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.wf-lbox__hi.is-loaded {
+  opacity: 1;
+}
+.wf-lbox__tick {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--fg);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.wf-lbox.is-open .wf-lbox__tick {
+  opacity: 1;
+  transition-delay: 0.3s;
+}
+.wf-lbox__tick--tl {
+  left: -36px;
+  top: -36px;
+}
+.wf-lbox__tick--tr {
+  right: -36px;
+  top: -36px;
+}
+.wf-lbox__tick--bl {
+  left: -36px;
+  bottom: -36px;
+}
+.wf-lbox__tick--br {
+  right: -36px;
+  bottom: -36px;
+}
+.wf-lbox__cap {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.25s,
+    transform 0.6s var(--ease-expo);
+}
+.wf-lbox.is-open .wf-lbox__cap {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.24s;
+}
+@media (max-width: 639px) {
+  .wf-lbox__cap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .wf-lbox__tick {
+    display: none;
+  }
+}
+
+/* ───────────────────────── /work list & wheel ───────────────────────── */
+.wr {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  outline: none;
+}
+.wr-rows {
+  position: absolute;
+  inset: 0;
+}
+.wr-row {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  height: var(--wr-pitch);
+  font-size: var(--wr-fs);
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--fg) 30%, transparent);
+  transform-origin: 0 50%;
+  will-change: transform, opacity;
+  transition: color 0.35s;
+}
+.wr-row:hover {
+  color: color-mix(in oklab, var(--fg) 62%, transparent);
+}
+.wr-row.is-active {
+  color: var(--fg);
+}
+.wr-bullet {
+  flex: none;
+  width: 0.15em;
+  height: 0.15em;
+  background: var(--signal);
+  transform: scale(0);
+  transition: transform 0.45s var(--ease-expo);
+}
+.wr-row.is-active .wr-bullet {
+  transform: none;
+}
+.wr-name {
+  font-family: var(--font-display);
+  font-weight: 860;
+  font-stretch: 78%;
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+}
+.wr-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 0.2em;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.3s,
+    transform 0.55s var(--ease-expo);
+}
+.wr-row.is-active .wr-tags {
+  opacity: 1;
+  transform: none;
+}
+.wr-chip {
+  padding: 6px 10px 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 450;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--fg) 82%, transparent);
+}
+.wr-go {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.wr-row:hover .wr-go {
+  background: var(--signal);
+  color: #0b0b0a;
+  border-color: transparent;
+}
+
+/* the preview card */
+.wr-card {
+  position: absolute;
+  right: var(--gutter);
+  top: 0;
+  z-index: 4;
+  width: min(32vw, 520px);
+  will-change: transform;
+}
+.wr-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--wf-plate);
+}
+.wr-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: inset(0 0 100% 0);
+}
+.wr-card__img.is-prev {
+  z-index: 1;
+  clip-path: inset(0);
+}
+.wr-card__img.is-current {
+  z-index: 2;
+  clip-path: inset(0);
+  transition: clip-path 0.7s var(--ease-expo);
+}
+/* "render" reveal: a signal-orange scan line leads the new picture down the card */
+.wr-card__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  animation: wr-scan 0.7s var(--ease-expo) forwards;
+}
+.wr-card__scan::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--signal);
+  box-shadow: 0 0 14px var(--signal);
+}
+@keyframes wr-scan {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+html.reduce .wr-card__scan {
+  display: none;
+}
+html.reduce .wr-card__img.is-current {
+  transition: none;
+}
+.wr-card__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(1.6rem, 3vw, 3rem);
+  color: var(--fg);
+}
+.wr-tick {
+  position: absolute;
+  z-index: 4;
+  width: 10px;
+  height: 10px;
+  border: 0 solid color-mix(in oklab, var(--fg) 60%, transparent);
+}
+.wr-tick--tl {
+  left: 8px;
+  top: 8px;
+  border-left-width: 1px;
+  border-top-width: 1px;
+}
+.wr-tick--tr {
+  right: 8px;
+  top: 8px;
+  border-right-width: 1px;
+  border-top-width: 1px;
+}
+.wr-tick--bl {
+  left: 8px;
+  bottom: 8px;
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+.wr-tick--br {
+  right: 8px;
+  bottom: 8px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+.wr-card__cap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+}
+.wr-card__go {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg);
+  transition: border-color 0.3s;
+}
+.wr-card__go:hover {
+  border-color: color-mix(in oklab, var(--fg) 50%, transparent);
+}
+@media (max-width: 767px) {
+  .wr-card,
+  .wr-tags {
+    display: none;
+  }
+}
+/* phones: the centred view switcher owns the bottom bar */
+@media (max-width: 639px) {
+  :is(.wf, .wr) .wf-hud > :first-child {
+    visibility: hidden;
+  }
+}
+
+/* ───────────────────────── dynamic scrollbar ───────────────────────── */
+/* on mouse/trackpad devices the bar is the scrollbar */
+@media (pointer: fine) {
+  html {
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+.dbar {
+  --dbar-ink: #0b0b0a;
+  --dbar-bone: #edeae4;
+  --dbar-mute: #8c8a85;
+  --dbar-rest: color-mix(in oklab, var(--fg) 58%, transparent);
+  --dbar-in: cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: fixed;
+  top: calc(var(--hud-h) + 64px);
+  bottom: 12px;
+  right: 7px;
+  z-index: 58;
+  width: 264px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+html[data-workui] .dbar {
+  bottom: 58px;
+}
+.dbar.is-hidden {
+  visibility: hidden;
+}
+.dbar__thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 64px;
+  border-radius: 30px;
+  background: var(--dbar-rest);
+  pointer-events: auto;
+  touch-action: none;
+  will-change: transform;
+  opacity: 0;
+  transition:
+    width 0.6s var(--dbar-in),
+    height 0.6s var(--dbar-in),
+    background-color 0.8s var(--dbar-in),
+    box-shadow 0.6s,
+    opacity 0.35s;
+}
+.dbar[data-shown] .dbar__thumb {
+  opacity: 1;
+}
+/* a generous invisible hit area around the 5px bar */
+.dbar__thumb::before {
+  content: "";
+  position: absolute;
+  inset: -12px -7px -12px -14px;
+}
+/* the capsule is pure black with a faint bone ring, so it reads as an object on the ink page too */
+.dbar[data-mode="bloom"] .dbar__thumb,
+.dbar[data-mode="player"] .dbar__thumb {
+  width: 50px;
+  height: 188px;
+  background: #000;
+  box-shadow:
+    0 0 0 1px rgb(237 234 228 / 0.14),
+    0 18px 50px -18px rgb(0 0 0 / 0.7);
+  transition-duration: 0.65s, 0.65s, 0.8s, 0.65s, 0.35s;
+}
+.dbar[data-mode="player"] .dbar__thumb {
+  width: 264px;
+  height: 404px;
+  box-shadow:
+    0 0 0 1px rgb(237 234 228 / 0.14),
+    0 30px 80px -24px rgb(0 0 0 / 0.7);
+}
+.dbar.is-playing[data-mode="rest"] .dbar__thumb {
+  background: var(--signal);
+}
+.dbar__inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.dbar__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* bloom: clock, ♪, time */
+.dbar__min {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  width: 50px;
+  height: 188px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0 13px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(30%);
+  filter: blur(10px);
+  transition:
+    opacity 0.35s,
+    transform 0.6s var(--dbar-in),
+    filter 0.6s var(--dbar-in);
+}
+.dbar[data-mode="bloom"] .dbar__min {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition-delay: 0.12s;
+}
+.dbar__min-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.dbar__clock {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--dbar-bone);
+  color: var(--signal);
+}
+.dbar__clock svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.dbar__hand {
+  transform-box: view-box;
+  transform-origin: 10px 10px;
+  transition: transform 0.5s var(--ease-expo);
+}
+.dbar__note {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--signal);
+  pointer-events: auto;
+  transition: background-color 0.25s;
+}
+.dbar__note:hover {
+  background: rgb(255 77 0 / 0.16);
+}
+.dbar__note svg {
+  width: 17px;
+  height: 17px;
+}
+.dbar__eq {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+}
+.dbar__eq i {
+  display: block;
+  width: 2.5px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleY(0.3);
+}
+.dbar__time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--dbar-bone);
+}
+.dbar__sub {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+/* the player */
+.dbar__music {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 264px;
+  height: 404px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 16px;
+  color: var(--dbar-bone);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(45%);
+  filter: blur(14px);
+  transition:
+    opacity 0.4s,
+    transform 0.65s var(--dbar-in),
+    filter 0.65s var(--dbar-in);
+}
+.dbar[data-mode="player"] .dbar__music {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+  transition-delay: 0.14s;
+}
+.dbar__cover {
+  display: block;
+  flex: none;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 18px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+.dbar__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dbar__meta {
+  min-width: 0;
+}
+.dbar__title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 860;
+  font-stretch: 78%;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dbar__artist {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--dbar-mute);
+}
+.dbar__wave {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  color: var(--signal);
+}
+.dbar__wave i {
+  display: block;
+  width: 2px;
+  height: 22px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleY(0.22);
+}
+.dbar__timeline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 14px;
+  margin-top: 16px;
+  border-radius: 4px;
+  touch-action: none;
+}
+.dbar__track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(237 234 228 / 0.16);
+}
+.dbar__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--dbar-bone);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.dbar__times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dbar-mute);
+}
+.dbar__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+.dbar__ctl {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--dbar-bone);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    scale 0.15s;
+}
+.dbar__ctl:hover {
+  background: rgb(237 234 228 / 0.08);
+}
+.dbar__ctl:active {
+  scale: 0.92;
+}
+.dbar__ctl svg {
+  width: 20px;
+  height: 20px;
+}
+.dbar__ctl--main {
+  width: 44px;
+  height: 44px;
+  background: var(--dbar-bone);
+  color: var(--dbar-ink);
+}
+.dbar__ctl--main:hover {
+  background: var(--signal);
+  color: var(--dbar-ink);
+}
+.dbar__ctl--main svg {
+  width: 22px;
+  height: 22px;
+}
+.dbar__credit {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--dbar-mute);
+}
+.dbar__credit a {
+  color: var(--dbar-bone);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+html.reduce :is(.dbar__thumb, .dbar__min, .dbar__music, .dbar__hand) {
+  transition: none;
 }
