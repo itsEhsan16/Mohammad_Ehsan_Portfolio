@@ -26,6 +26,7 @@ The site behaves like a renderer. Everything starts as a blueprint (halftone dot
 
 **Chrome:**
 - HUD telemetry strip: IST clock, availability, FPS, build and scroll.
+- A dynamic scrollbar in place of the native one. A thin pill follows the page while it moves and blooms into a capsule with a live IST clock and ♪; ♪ opens a small music player with built-in tracks played live through Web Audio.
 - ⌘K command palette.
 - A macOS-style pointer set (black fill, signal-orange outline): arrow, hand, I-beam over text, open and closed hands for dragging, a crosshair where the hero can be painted, and a copy pointer. Hints such as "Open" or "Drag" appear in a small tooltip beside it. A rainbow pinwheel spins beside the arrow while a page changes, and shaking the mouse makes the pointer grow, like macOS.
 - Ink/paper theme toggle with a circular reveal.
@@ -111,6 +112,7 @@ All copy lives in typed modules under `content/`. Nothing is hard-coded in compo
 | `content/experience.ts` | Roles. The Infotact description is a draft to refine. |
 | `content/capabilities.ts` | Skill groups (also feeds the marquee) |
 | `content/services.ts` | Freelance process cards and offerings (no prices) |
+| `content/music.ts` | The playlist behind the scrollbar's ♪ (built-in pieces, or your own MP3s) |
 
 **How case-study content works:**
 - Add a `{ type: "stats" }` block once you have real numbers. Empty blocks are hidden.
@@ -140,6 +142,22 @@ Prompts for every asset are in **[`docs/ASSET_PROMPTS.md`](docs/ASSET_PROMPTS.md
 - To edit a cursor, change `name.svg`, then copy it to `name@2x.svg` with `width` and `height` doubled. Safari uses the 2x file on Retina. If you move the tip, update the hotspot in `app/globals.css` (listed in `lib/cursor.ts`).
 - Each image is cropped to its glyph. Safari falls back to the system cursor near the window's right and bottom edges when an image would cross them, so smaller images keep that band thin.
 
+## The scrollbar and the music
+
+`components/chrome/DynamicBar.tsx` is one capsule on the right edge with three states:
+- **Rest:** a 5 × 64 pill that follows the scroll position. It shows while the page moves or when the pointer comes near the right edge, and fades after a moment of stillness. Drag it to scroll. While music plays it stays visible, in signal orange.
+- **Bloom:** an analog clock, ♪ and the time in IST. It opens while the page moves, on hover or on keyboard focus, and folds back 150 ms after that ends.
+- **Player:** cover, title and artist, a waveform driven by the real audio level, a timeline (drag it, or use ← / →, Home and End) and prev / play-pause / next. Esc, a click outside, moving the pointer away or scrolling folds it back to the bloom.
+
+On mouse and trackpad devices the native scrollbar is hidden, so the pill is the scrollbar. On touch screens it sits beside the system's own scroll indicator: tap it to bloom, then tap ♪.
+
+The music:
+- The player (`lib/music/player.ts`) lives in the root layout, so music keeps playing between pages. Nothing plays until someone presses ♪ or picks **Play music** in ⌘K. OS media keys and the lock screen work through the Media Session API.
+- The three built-in pieces are composed in code and played live with Web Audio (`lib/music/synth.ts`), so there are no audio files to host or license. Each gets a generated halftone cover.
+- **To add a real song,** put the MP3 (and optionally a square cover) in `public/media/music/` and add an entry with `src` (and `cover`) to `content/music.ts`. Only use audio you have the rights to publish.
+
+The concept and motion are Xavier Jac's ([@KMkota0](https://x.com/KMkota0)) Dynamic Scrollbar; the player credits him. The code is our own.
+
 ## Environment variables
 
 All variables are optional; see `.env.example`.
@@ -156,7 +174,7 @@ All variables are optional; see `.env.example`.
 app/          routes (/, /work, /work/[slug], /about, 404), metadata, OG images, sitemap, robots, icons
 content/      all copy and data (typed)
 components/
-  chrome/     HUD, header, mobile menu, cursor, footer + SAY HELLO, stickers, preloader, ⌘K palette
+  chrome/     HUD, header, mobile menu, cursor, dynamic scrollbar + music player, footer + SAY HELLO, stickers, preloader, ⌘K palette
   home/       hero, manifesto, work reel, capabilities, services, experience, contact
   work/       work views (switcher, title reel, field), project media, case blocks, next project
   about/      stamp portrait, telemetry card
@@ -166,6 +184,7 @@ lib/
   gl/         OGL engine, shaders, procedural posters/text masks, DOM↔GL registry
   motion/     GSAP registration + eases, Lenis handle
   field/      the /work views: field geometry + physics, title-reel physics, lightbox, view store, tile lists (built from content at build time)
+  music/      the site-wide music player and the built-in Web Audio pieces
   transition.ts  wipe.ts  store.ts  theme.ts  audio.ts  time.ts  media.ts (build-time asset checks)  seo.ts
 ```
 
@@ -190,11 +209,12 @@ lib/
 
 ## Accessibility and performance
 
-- axe (WCAG 2 A/AA) reports no violations on every route in both themes.
+- axe (WCAG 2.1 A/AA) reports no violations on any route in either theme, with one deliberate exception: while the manifesto's scroll-scrub is under way, the words you haven't reached yet are dimmed. With reduced motion they are always at full strength.
 - Skip link and real links and buttons throughout. Visible focus rings, plus `aria-live` for toasts and form status.
 - The split-text helpers keep screen-reader text intact.
 - Reduced motion is respected everywhere, including an override through the pre-paint script.
 - The custom pointer can be switched off from ⌘K ("Use system cursor") for anyone who relies on a larger OS cursor.
+- The scrollbar is a real button that blooms on keyboard focus. The player is a labelled dialog and its timeline is a slider; Esc returns focus to ♪, and ⌘K can play or pause the music.
 - Initial JS on `/` is about 253 KB gzipped (React 19 + GSAP make up most of it). The WebGL chunk (about 43 KB) and the palette load later.
 
 ## Deployment

@@ -4,6 +4,7 @@ import { site } from "@/content/site";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { RouteWatcher } from "@/components/transition/RouteWatcher";
 import { Hud } from "@/components/chrome/Hud";
+import { DynamicBar } from "@/components/chrome/DynamicBar";
 import { Header } from "@/components/chrome/Header";
 import { MobileMenu } from "@/components/chrome/MobileMenu";
 import { Cursor } from "@/components/chrome/Cursor";
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <RouteWatcher />
           <GLCanvas />
           <Hud />
+          <DynamicBar />
           <Header />
           <MobileMenu />
           {children}

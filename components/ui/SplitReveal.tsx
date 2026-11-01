@@ -22,9 +22,10 @@ interface Props {
 }
 
 /**
- * Masked line/word/char rise using GSAP SplitText (accessible: aria label on the
- * parent, split pieces aria-hidden). Content is visible without JS; with JS and
- * motion enabled it is hidden until split (with a CSS failsafe).
+ * Masked line/word/char rise using GSAP SplitText. Accessible: a heading gets an
+ * aria-label with its split pieces aria-hidden; anything else is read straight
+ * from its line pieces. Content is visible without JS; with JS and motion
+ * enabled it is hidden until split (with a CSS failsafe).
  */
 export function SplitReveal({
   as = "div",
@@ -59,6 +60,8 @@ export function SplitReveal({
             mask: "lines",
             linesClass: "split-line",
             autoSplit: true,
+            // aria-label isn't allowed on a <p>, so only headings take one
+            aria: /^H[1-6]$/.test(el.tagName) ? "auto" : "none",
             onSplit(self) {
               st?.kill();
               stopWait?.();

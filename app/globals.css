@@ -79,7 +79,6 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
-    scrollbar-gutter: stable;
   }
   body {
     font-family: var(--font-sans);
@@ -213,7 +212,7 @@ html:not(.reduce) .grain {
  */
 /* 1 · I-beam over text blocks (not inside links, buttons, drag/paint areas or unselectable UI) and in fields */
 html.mac-cursor
-  :where(p, h1, h2, h3, h4, h5, h6, dt, dd, blockquote, figcaption, pre, code, td, th, caption, li:not(:has(> :not(span, em, strong, b, i, small, code, br, svg)))):not(:where(a[href], area[href], button, summary, [role="button"], [role="link"], .cursor-pointer, [data-cursor], .select-none, .wf, .wr, .preloader, [role="img"]) *):not(:where(.select-none)),
+  :where(p, h1, h2, h3, h4, h5, h6, dt, dd, blockquote, figcaption, pre, code, td, th, caption, li:not(:has(> :not(span, em, strong, b, i, small, code, br, svg)))):not(:where(a[href], area[href], button, summary, [role="button"], [role="link"], .cursor-pointer, [data-cursor], .select-none, .wf, .wr, .dbar, .preloader, [role="img"]) *):not(:where(.select-none)),
 html.mac-cursor
   :where(input:not([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"], [type="hidden"]), textarea, [contenteditable]:not([contenteditable="false"])) {
   cursor: url("/cursors/ibeam.svg") 5 11, text;
@@ -222,7 +221,7 @@ html.mac-cursor
 }
 /* 2 · hand on anything clickable (descendants inherit it) */
 html.mac-cursor
-  :where(a[href], area[href], button, summary, select, [role="button"], [role="link"], input:is([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"]), .cursor-pointer),
+  :where(a[href], area[href], button, summary, select, [role="button"], [role="link"], [role="slider"], input:is([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="file"], [type="image"], [type="color"], [type="range"]), .cursor-pointer),
 html.mac-cursor :where(.wf).is-over {
   cursor: url("/cursors/hand.svg") 8 2, pointer;
   cursor: -webkit-image-set(url("/cursors/hand.svg") 1x, url("/cursors/hand@2x.svg") 2x) 8 2, pointer;
@@ -1459,4 +1458,376 @@ html.reduce .wr-card__img.is-current {
   :is(.wf, .wr) .wf-hud > :first-child {
     visibility: hidden;
   }
+}
+
+/* ───────────────────────── dynamic scrollbar ───────────────────────── */
+/* on mouse/trackpad devices the bar is the scrollbar */
+@media (pointer: fine) {
+  html {
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+.dbar {
+  --dbar-ink: #0b0b0a;
+  --dbar-bone: #edeae4;
+  --dbar-mute: #8c8a85;
+  --dbar-rest: color-mix(in oklab, var(--fg) 58%, transparent);
+  --dbar-in: cubic-bezier(0.645, 0.045, 0.355, 1);
+  position: fixed;
+  top: calc(var(--hud-h) + 64px);
+  bottom: 12px;
+  right: 7px;
+  z-index: 58;
+  width: 264px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+html[data-workui] .dbar {
+  bottom: 58px;
+}
+.dbar.is-hidden {
+  visibility: hidden;
+}
+.dbar__thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 64px;
+  border-radius: 30px;
+  background: var(--dbar-rest);
+  pointer-events: auto;
+  touch-action: none;
+  will-change: transform;
+  opacity: 0;
+  transition:
+    width 0.6s var(--dbar-in),
+    height 0.6s var(--dbar-in),
+    background-color 0.8s var(--dbar-in),
+    box-shadow 0.6s,
+    opacity 0.35s;
+}
+.dbar[data-shown] .dbar__thumb {
+  opacity: 1;
+}
+/* a generous invisible hit area around the 5px bar */
+.dbar__thumb::before {
+  content: "";
+  position: absolute;
+  inset: -12px -7px -12px -14px;
+}
+/* the capsule is pure black with a faint bone ring, so it reads as an object on the ink page too */
+.dbar[data-mode="bloom"] .dbar__thumb,
+.dbar[data-mode="player"] .dbar__thumb {
+  width: 50px;
+  height: 188px;
+  background: #000;
+  box-shadow:
+    0 0 0 1px rgb(237 234 228 / 0.14),
+    0 18px 50px -18px rgb(0 0 0 / 0.7);
+  transition-duration: 0.65s, 0.65s, 0.8s, 0.65s, 0.35s;
+}
+.dbar[data-mode="player"] .dbar__thumb {
+  width: 264px;
+  height: 404px;
+  box-shadow:
+    0 0 0 1px rgb(237 234 228 / 0.14),
+    0 30px 80px -24px rgb(0 0 0 / 0.7);
+}
+.dbar.is-playing[data-mode="rest"] .dbar__thumb {
+  background: var(--signal);
+}
+.dbar__inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.dbar__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* bloom: clock, ♪, time */
+.dbar__min {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  width: 50px;
+  height: 188px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0 13px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(30%);
+  filter: blur(10px);
+  transition:
+    opacity 0.35s,
+    transform 0.6s var(--dbar-in),
+    filter 0.6s var(--dbar-in);
+}
+.dbar[data-mode="bloom"] .dbar__min {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition-delay: 0.12s;
+}
+.dbar__min-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.dbar__clock {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--dbar-bone);
+  color: var(--signal);
+}
+.dbar__clock svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.dbar__hand {
+  transform-box: view-box;
+  transform-origin: 10px 10px;
+  transition: transform 0.5s var(--ease-expo);
+}
+.dbar__note {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--signal);
+  pointer-events: auto;
+  transition: background-color 0.25s;
+}
+.dbar__note:hover {
+  background: rgb(255 77 0 / 0.16);
+}
+.dbar__note svg {
+  width: 17px;
+  height: 17px;
+}
+.dbar__eq {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+}
+.dbar__eq i {
+  display: block;
+  width: 2.5px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleY(0.3);
+}
+.dbar__time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--dbar-bone);
+}
+.dbar__sub {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+/* the player */
+.dbar__music {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 264px;
+  height: 404px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 16px;
+  color: var(--dbar-bone);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(45%);
+  filter: blur(14px);
+  transition:
+    opacity 0.4s,
+    transform 0.65s var(--dbar-in),
+    filter 0.65s var(--dbar-in);
+}
+.dbar[data-mode="player"] .dbar__music {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+  transition-delay: 0.14s;
+}
+.dbar__cover {
+  display: block;
+  flex: none;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 18px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+.dbar__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dbar__meta {
+  min-width: 0;
+}
+.dbar__title {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 860;
+  font-stretch: 78%;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dbar__artist {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--dbar-mute);
+}
+.dbar__wave {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  color: var(--signal);
+}
+.dbar__wave i {
+  display: block;
+  width: 2px;
+  height: 22px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleY(0.22);
+}
+.dbar__timeline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 14px;
+  margin-top: 16px;
+  border-radius: 4px;
+  touch-action: none;
+}
+.dbar__track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(237 234 228 / 0.16);
+}
+.dbar__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--dbar-bone);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.dbar__times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dbar-mute);
+}
+.dbar__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+.dbar__ctl {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--dbar-bone);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    scale 0.15s;
+}
+.dbar__ctl:hover {
+  background: rgb(237 234 228 / 0.08);
+}
+.dbar__ctl:active {
+  scale: 0.92;
+}
+.dbar__ctl svg {
+  width: 20px;
+  height: 20px;
+}
+.dbar__ctl--main {
+  width: 44px;
+  height: 44px;
+  background: var(--dbar-bone);
+  color: var(--dbar-ink);
+}
+.dbar__ctl--main:hover {
+  background: var(--signal);
+  color: var(--dbar-ink);
+}
+.dbar__ctl--main svg {
+  width: 22px;
+  height: 22px;
+}
+.dbar__credit {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--dbar-mute);
+}
+.dbar__credit a {
+  color: var(--dbar-bone);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+html.reduce :is(.dbar__thumb, .dbar__min, .dbar__music, .dbar__hand) {
+  transition: none;
 }

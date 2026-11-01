@@ -40,7 +40,8 @@ const STICKERS: StickerDef[] = [
   },
   {
     id: "base",
-    label: site.location.label,
+    // the accessible name has to contain the words you can see on the sticker
+    label: `Based in ${site.location.country} · ${site.location.tzLabel} · +05:30`,
     style: { left: "8%", bottom: "16%" },
     rotate: -5,
     className: "grid h-28 w-28 place-items-center rounded-full border-2 border-dashed border-ink/70 bg-bone text-ink",
@@ -80,7 +81,7 @@ const STICKERS: StickerDef[] = [
   },
   {
     id: "cmdk",
-    label: "Open command menu",
+    label: "⌘K — open the command menu",
     style: { right: "18%", bottom: "30%" },
     rotate: -11,
     className:

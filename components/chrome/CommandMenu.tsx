@@ -11,6 +11,7 @@ import { toggleTheme } from "@/lib/theme";
 import { setSound, tick } from "@/lib/audio";
 import { copyEmail } from "./FooterBits";
 import { cursorCapable, setMacCursor } from "@/lib/cursor";
+import { music } from "@/lib/music/player";
 import { getLenis } from "@/lib/motion/lenis";
 import { gsap } from "@/lib/motion/gsap";
 
@@ -115,6 +116,9 @@ export default function CommandMenu() {
                 hint="off by default"
               >
                 Toggle interface sound
+              </Item>
+              <Item value="music play pause song audio" onSelect={() => run(() => music.toggle())} hint={music.track.title}>
+                {music.getState().playing ? "Pause music" : "Play music"}
               </Item>
               {cursorCapable() && (
                 <Item
